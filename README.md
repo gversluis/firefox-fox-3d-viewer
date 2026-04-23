@@ -81,7 +81,7 @@ A stub website is loaded as workaround. The extension is inserted so it loads as
 
 ## 📷 Screenshots
 
-<img src="/screenshots/vox.jpg" height="747" alt="Screenshot of Vox file opened in Fox 3D viewer" />
+<img src="/screenshots/vox.jpg" height="611" alt="Screenshot of Vox file opened in Fox 3D viewer" />
 
 ---
 
