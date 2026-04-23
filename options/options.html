@@ -22,7 +22,7 @@
     <section class="extensions">
       <div class="title">Display 3D files with the selected extensions</div>
       <div class="details">
-        The selected files types will be displayed using <a href="https://threejs.org/">three.js</a> loaders.<br>
+        The selected file types will be displayed using <a href="https://threejs.org/">three.js</a> loaders.<br>
       </div>
       <template id="extension"><div><input type="checkbox" name="extension" id="ext${ext}" value="${ext}" checked><label for="ext${ext}">${description} (.${ext})</label></div></template>
     </section>
@@ -31,12 +31,12 @@
       <div class="title">Stub page</div>
       <div class="details">
         Extensions are limited by a content security policy.<br>
-        This means they can not load on the fly generated scripts which some loaders use.<br>
+        This means extensions can not load on the fly generated scripts which some loaders use.<br>
         Another website is loaded as workaround. The extension is inserted so it loads as a regular page.<br>
       </div>
       <div class="title">Use stub for 3D files with the selected extensions</div>
       <div class="details">
-        These Three JS loaders use generated scripts.
+        These Three.js loaders use generated scripts.
       </div>
       <template id="stubextension"><div><input type="checkbox" name="stubextension" id="stubext${ext}" value="${ext}" checked><label for="stubext${ext}">${description} (.${ext})</label></div></template>
       <div class="title">Stub URL</div>
@@ -55,8 +55,7 @@
         Drag around to rotate it.
       </div>
       <div class="viewer"></div>
-    </section
-    <img src="../icons/icon-128.png" width="128" height="128" align="left">
+    </section>
 
   </body>
 
