@@ -1,5 +1,7 @@
 :root {
   color-scheme: light dark;
+  --bg-color: light-dark(#fff, #23222B);
+  --text-color: light-dark(#000, #fbfbfe);
 }
 
 body {

@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name"            : "Fox 3D viewer",
   "version"         : "0.1.0",
-  "description"     : "View lots of 3D formats directly in your browser, like 3DM (Rhino 3D), 3DS, 3MF, DAE (COLLADA), DRC (Draco), FBX, GCODE, GLB, GLTF, KMZ, LWO, MD2, MPD, NRRD, OBJ (Wavefront), PDB, PLY, STL, USDZ, VOX, VTK, VTP, WRL, XYZ", 
+  "description"     : "View a wide range of 3D formats directly in your browser, like 3DM (Rhino 3D), 3DS, 3MF, DAE (COLLADA), DRC (Draco), FBX, GCODE, GLB, GLTF, KMZ, LWO, MD2, MPD, NRRD, OBJ (Wavefront), PDB, PLY, STL, USDZ, VOX, VTK, VTP, WRL, XYZ", 
   "homepage_url"    : "https://github.com/gversluis/firefox-fox-3d-viewer",
   "icons": {
     "16": "icons/icon-16.png",
@@ -64,8 +64,7 @@
     "webRequestBlocking",
     "tabs",
     "webNavigation",
-    "storage",
-    "theme"
+    "storage"
   ],
 
   "host_permissions": [

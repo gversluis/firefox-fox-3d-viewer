@@ -1,17 +1,5 @@
 console.log("Theme", browser.theme);
 
-browser.theme.getCurrent().then(theme => {
-  const colors = theme.colors || {};
-  document.documentElement.style.setProperty('--bg-color', colors.popup || colors.toolbar || (theme.properties.color_scheme === "dark" ? '#23222B' : '#fff'));
-  document.documentElement.style.setProperty('--text-color', colors.popup_text || colors.toolbar_text || (theme.properties.color_scheme === 'dark' ? '#fff' : '#000'));
-});
-
-browser.theme.onUpdated.addListener(({ theme }) => {
-  const colors = theme.colors || {};
-  document.documentElement.style.setProperty('--bg-color', colors.popup || colors.toolbar || (theme.properties.color_scheme === "dark" ? '#23222B' : '#fff'));
-  document.documentElement.style.setProperty('--text-color', colors.popup_text || colors.toolbar_text || (theme.properties.color_scheme === 'dark' ? '#fff' : '#000'));
-});
-
 document.body.addEventListener("dragover", e => {
   const fileItems = [...e.dataTransfer.items].filter( item => item.kind === "file" );
   if (fileItems.length > 0) {
