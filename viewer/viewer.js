@@ -781,8 +781,8 @@ function animate() {
 };
 
 function resize(dimensions) {
-    const width = dimensions ? dimensions.width : window.innerWidth;
-    const height = dimensions ? dimensions.height : window.innerHeight;
+    const width = dimensions?.width ? dimensions.width : window.innerWidth;
+    const height = dimensions?.height ? dimensions.height : window.innerHeight;
     console.log("Resize", width, height, width / height);
     camera.aspect = width / height;
     camera.updateProjectionMatrix();
