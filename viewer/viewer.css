@@ -1,0 +1,77 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+}
+body {
+  position: absolute;
+  display: flex;
+  height: calc(100% - 1.5cm - 2px); /* leave place for button */
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  background-color: #000;
+  color: #fff;
+}
+#download {
+  position: absolute;
+  display: flex;
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  max-width: 10cm;
+  min-height: 1.5cm;
+  bottom: calc(-1.5cm + 2px);
+  background-color: #0088ff;
+  border: 0px solid transparent;
+  border-radius: 12px;  
+  text-decoration: none;
+  color: #ffffff;
+}
+#settings {
+  appearance: none;
+}
+label[for=settings] {
+  position: fixed;
+  top: 2px;
+  right: 2px;
+  font-size: 1cm;
+  margin-left: -10px;
+}
+#settings+.menu {
+  position: absolute;
+  box-sizing: border-box;
+  display: block;
+  right: -200px;
+  top: 1.5cm;
+  margin: 0;
+  border-radius: 6px 0 0 6px;
+  text-align: left;
+  background-color: #ccc;
+  overflow: hidden;
+  transition: right 500ms;
+}
+#settings+.menu>ul {
+  list-style-type: none;
+  padding: 6px;
+}
+#settings+.menu>ul>li {
+  padding: 6px;
+}
+
+#settings:checked+.menu {
+  right: 0;
+  transition: right 500ms;
+}
+.hamburger+.menu li {
+  margin: 0;
+  padding: 0;
+  border: 1px solid #ccc;	
+}
+.error {
+  background-color: #600;
+  color: #fff;
+}

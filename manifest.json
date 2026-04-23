@@ -1,0 +1,84 @@
+{
+  "manifest_version": 3,
+  "name"            : "Fox 3D viewer",
+  "version"         : "0.1.0",
+  "description"     : "View lots of 3D formats directly in your browser, like 3DM (Rhino 3D), 3DS, 3MF, DAE (COLLADA), DRC (Draco), FBX, GCODE, GLB, GLTF, KMZ, LWO, MD2, MPD, NRRD, OBJ (Wavefront), PDB, PLY, STL, USDZ, VOX, VTK, VTP, WRL, XYZ", 
+  "homepage_url"    : "https://github.com/gversluis/firefox-fox-3d-viewer",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "19": "icons/icon-19.png",
+    "38": "icons/icon-38.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
+
+  "action": {
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "19": "icons/icon-19.png",
+      "38": "icons/icon-38.png",
+      "48": "icons/icon-48.png",
+      "96": "icons/icon-96.png",
+      "128": "icons/icon-128.png"
+    },
+    "default_title": "Fox 3D viewer"
+  },
+
+  "options_ui": {
+    "page": "options/options.html"
+  },
+
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; object-src 'none'; frame-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; worker-src 'self' blob: 'wasm-unsafe-eval'; img-src 'self' blob: https: filesystem:; media-src 'self' blob: https: filesystem:; connect-src blob: https: filesystem:; style-src 'self' blob: 'unsafe-inline' 'unsafe-hashes'; font-src 'self' data:; upgrade-insecure-requests;"
+  },
+    
+  "background" : {
+    "scripts": ["background.js"],
+    "type": "module"
+  },
+
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content-script.js"],
+      "run_at": "document_start"
+    }
+  ],
+ 
+  "web_accessible_resources": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "resources": [
+        "/viewer/*",
+        "/icons/*"
+      ]
+    }
+  ],
+
+  "permissions": [
+    "downloads",
+    "webRequest",
+    "webRequestBlocking",
+    "tabs",
+    "webNavigation",
+    "storage",
+    "theme"
+  ],
+
+  "host_permissions": [
+  ],
+  
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
+
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "firefox-fox-3d-viewer@gversluis.github.io",
+      "strict_min_version": "110.0"
+    }
+  }
+}

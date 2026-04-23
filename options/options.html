@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="options.css"/>
+    <script src="options.js" type="module"></script>
+  </head>
+
+  <body>
+
+    <section class="Permissions">
+      <div class="title">Permissions</div>
+      <div class="details">
+        To detect requests to 3D files and to catch blobs (in memory files) this extension needs access to all pages.<br>
+        <br>
+        You can disable this if you only want to upload local files.<br>
+        If you disable this and want to view extensions which require a <a href="#stub">stub URL</a>, then do not forget to <a href="#permissionstuburl">grant access</a> to the stub URL at the bottom of this page.<br>
+      </div>
+      <div><input type="checkbox" name="permissions" id="permissions" value="permissions" checked><label for="permissions">Grant permission to access all websites</label></div>
+    </section>
+
+    <section class="extensions">
+      <div class="title">Display 3D files with the selected extensions</div>
+      <div class="details">
+        The selected files types will be displayed using <a href="https://threejs.org/">three.js</a> loaders.<br>
+      </div>
+      <template id="extension"><div><input type="checkbox" name="extension" id="ext${ext}" value="${ext}" checked><label for="ext${ext}">${description} (.${ext})</label></div></template>
+    </section>
+
+    <section class="pagescript" id="stub">
+      <div class="title">Stub page</div>
+      <div class="details">
+        Extensions are limited by a content security policy.<br>
+        This means they can not load on the fly generated scripts which some loaders use.<br>
+        Another website is loaded as workaround. The extension is inserted so it loads as a regular page.<br>
+      </div>
+      <div class="title">Use stub for 3D files with the selected extensions</div>
+      <div class="details">
+        These Three JS loaders use generated scripts.
+      </div>
+      <template id="stubextension"><div><input type="checkbox" name="stubextension" id="stubext${ext}" value="${ext}" checked><label for="stubext${ext}">${description} (.${ext})</label></div></template>
+      <div class="title">Stub URL</div>
+      <div class="details">
+        The stub URL needs to be an existing URL which will be loaded before showing the 3D file. It won't affect browsing to the page itself.<br>
+        URL https://www.example.org/ should be private since it is not supposed to do any tracking.<br>
+      </div>
+      <div><input type="text" name="stuburl" id="stuburl" placeholder="https://www.example.org/"></div>
+      <div><input type="checkbox" name="permissionstuburl" id="permissionstuburl" value="permissionstuburl" checked><label for="permissionstuburl">Grant permission to stub URL</label></div>
+    </section>
+
+    <section class="pagescript">
+      <div class="title">Demo</div>
+      <div class="details">
+        You should see the Fox 3D viewer logo below.<br>
+        Drag around to rotate it.
+      </div>
+      <div class="viewer"></div>
+    </section
+    <img src="../icons/icon-128.png" width="128" height="128" align="left">
+
+  </body>
+
+</html>

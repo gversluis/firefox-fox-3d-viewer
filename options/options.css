@@ -1,0 +1,152 @@
+:root, :host(.anonymous-content-host) {
+  color-scheme: light dark;
+  --bg-color: light-dark(#fff, #23222B);
+  --text-color: light-dark(#000, #fbfbfe);
+  --input-background: light-dark(#fff, #00CADB);
+  --color-accent-primary: light-dark(var(--color-blue-60), var(--color-cyan-30));
+  --button-background-color: color-mix(in srgb, currentColor 7%, transparent);
+  --toggle-background-color: var(--button-background-color);
+  --toggle-background-color-pressed: var(--color-accent-primary);
+  --input-text-background-color: light-dark(#fff, rgb(43, 42, 51));
+  --background-color-canvas: light-dark(var(--color-white), var(--color-gray-90));
+  --toggle-dot-background-color-on-pressed: var(--background-color-canvas);
+  --border-color-interactive: light-dark(var(--color-gray-60), var(--color-gray-50));
+  --input-text-border-color: var(--border-color-interactive);
+  --toggle-border-color: var(--border-color-interactive);
+  /* --text-color: light-dark(var(--color-gray-100), var(--color-gray-05)); */
+  --red-50: #ff0039;
+  --in-content-border-invalid: light-dark(var(--red-50), rgb(255, 132, 139));
+  --color-black: #000000;  
+  --color-blue-0: oklch(97% 0.05 260);
+  --color-blue-10: oklch(90% 0.13 260);
+  --color-blue-20: oklch(83% 0.17 260);
+  --color-blue-30: oklch(76% 0.2 260);
+  --color-blue-40: oklch(69% 0.22 260);
+  --color-blue-50: oklch(62% 0.24 260);
+  --color-blue-60: oklch(55% 0.24 260);
+  --color-blue-70: oklch(48% 0.2 260);
+  --color-blue-80: oklch(41% 0.17 260);
+  --color-blue-90: oklch(34% 0.14 260);
+  --color-blue-100: oklch(27% 0.1 260);
+  --color-blue-110: oklch(20% 0.05 260);
+  --color-cyan-0: oklch(97% 0.05 205);
+  --color-cyan-10: oklch(90% 0.07 205);
+  --color-cyan-20: oklch(83% 0.11 205);
+  --color-cyan-30: oklch(76% 0.14 205);
+  --color-cyan-40: oklch(69% 0.19 205);
+  --color-cyan-50: oklch(62% 0.21 205);
+  --color-cyan-60: oklch(55% 0.21 205);
+  --color-cyan-70: oklch(48% 0.2 205);
+  --color-cyan-80: oklch(41% 0.17 205);
+  --color-cyan-90: oklch(34% 0.14 205);
+  --color-cyan-100: oklch(27% 0.1 205);
+  --color-cyan-110: oklch(20% 0.05 205);
+  --color-gray-05: #fbfbfe;
+  --color-gray-20: #f0f0f4;
+  --color-gray-30: #bac2ca;
+  --color-gray-50: #bfbfc9;
+  --color-gray-60: #8f8f9d;
+  --color-gray-70: #5b5b66;
+  --color-gray-80: #23222b;
+  --color-gray-90: #1c1b22;
+  --color-gray-100: #15141a;
+  --color-white: #ffffff;
+  --focus-outline: var(--focus-outline-width) solid var(--focus-outline-color);
+  --focus-outline-color: var(--color-accent-primary);
+  --focus-outline-inset: calc(-1 * var(--focus-outline-width));
+  --focus-outline-offset: 2px;
+  --focus-outline-width: 2px;
+  --font-weight: normal;
+  --font-weight-bold: 700;
+  --font-weight-semibold: 600;
+  --heading-font-size-medium: var(--font-size-large);
+  --heading-font-size-large: var(--font-size-xlarge);
+  --heading-font-size-xlarge: var(--font-size-xxlarge);
+  --heading-font-weight: var(--font-weight-semibold);
+  --input-text-min-height: var(--button-min-height);
+  --link-focus-outline-offset: 1px;
+  --text-color-error: light-dark(var(--color-red-70), var(--color-red-20));
+}
+
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-weight: 400;
+  line-height: 150%;
+  margin: 0;
+  padding: 12px 0;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+section {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--color-gray-70);
+}
+
+.title {
+  display: block;
+  font-size: 1em;
+  font-weight: var(--font-weight-semibold);
+  margin-bottom: 6px;
+}
+
+.details {
+  color: #999;
+}
+
+div {
+    margin: 6px 0px;
+    vertical-align: middle;
+}
+
+input[type=checkbox] {
+	position: relative;
+	opacity: 0;
+	width: 0;		/* for internet explorer */
+}
+
+input[type=text] {
+    width: 300px;
+    max-width: 90%;
+    margin: 12px 2px;
+    padding: 6px;
+    background: var(--input-text-background-color);
+    border: 1px solid var(--input-text-border-color);
+    border-radius: 8px;
+    font-size: 15px;
+    outline: none;
+}
+
+input[type=text].error:focus,
+input[type=text]:focus {
+    outline: 2px solid var(--color-accent-primary);
+}
+input[type=text].error {
+    outline: 2px solid var(--in-content-border-invalid);
+}
+
+input[type=checkbox] + label:before {
+    position: relative;
+    top: 2px;
+    display: inline-block;
+    background: radial-gradient(circle at 25%, var(--toggle-border-color),var(--toggle-border-color) 25%,var(--toggle-background-color) 29%);;
+    width: 30px;
+    height: 14px;
+    border: 1px solid var(--toggle-border-color);
+    margin-right: 8px;
+    border-radius: 8px;
+    content: ' ';
+    transition: background 0.125s ease-in-out;  /* does not seem to work on radial gradient, but maybe in the future... */
+}
+
+input[type=checkbox]:checked + label:before {
+    border: 1px solid var(--toggle-background-color-pressed);
+    background: radial-gradient(circle at 75%, var(--toggle-dot-background-color-on-pressed),var(--toggle-dot-background-color-on-pressed) 25%,var(--toggle-background-color-pressed) 29%);;
+}
+
+.lil-gui.autoPlace {
+    top: auto;
+    margin-top: -100%;
+    display: none;
+}
