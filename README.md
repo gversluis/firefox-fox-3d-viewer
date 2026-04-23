@@ -2,6 +2,8 @@
 
 View a wide range of 3D formats directly in your browser, like 3DM (Rhino 3D), 3DS, 3MF, DAE (COLLADA), DRC (Draco), FBX, GCODE, GLB, GLTF, KMZ, LWO, MD2, MPD, NRRD, OBJ (Wavefront), PDB, PLY, STL, USDZ, VOX, VTK, VTP, WRL, XYZ.
 
+<img src="/icons/icon-128.png" height="128" alt="Logo" />
+
 ---
 
 ## 📌 Features
