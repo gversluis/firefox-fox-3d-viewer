@@ -58,6 +58,23 @@ A stub website is loaded as workaround. The extension is inserted so it loads as
 
 ---
 
+## 📷 Screenshots
+
+<img src="/screenshots/vox.jpg" height="611" alt="Screenshot of Vox file opened in Fox 3D viewer" />
+<a href="/screenshots/settings.png"><img src="/screenshots/vox.jpg" height="611" alt="Screenshot extension settings" /></a>
+
+---
+
+## 🏛️ Background
+
+I downloaded a STL file in Fennec (Firefox for Android) and did not see a preview. Nor did I have an app to view it.
+
+I would have loved a preview in the browser.
+
+Since it did not exist I decided to create it. How hard could it be...
+
+---
+
 ## 👓 Permissions
 
 - Fox 3D viewer requires access to all websites
@@ -76,12 +93,6 @@ A stub website is loaded as workaround. The extension is inserted so it loads as
   * Load and save the extensions to be intercepted
 
 \* `Stub URL` is a website that is opened by the extension. All contents are replaced so the viewer can load. This allows the viewer to run in page context and run dynamic code which is required by some loaders.
-
----
-
-## 📷 Screenshots
-
-<img src="/screenshots/vox.jpg" height="611" alt="Screenshot of Vox file opened in Fox 3D viewer" />
 
 ---
 
@@ -133,6 +144,19 @@ Display rendered result
 1. Open `about:debugging#/runtime/this-firefox`.
 2. Click **Load Temporary Add-on…**
 3. Select the extension's `manifest.json`.
+
+Three.js is slightly modified because Three.js relies on an importmap. I could not get importmap to work in the extension page (script context).
+
+The next steps describe how Three.js was modified for use in this extension:
+
+- Copied three.core.js and three.module.js to ./viewer/
+- Changed import/export URL from map to relative URL in three.module.js to './three.core.js';
+- Copied examples/jsm/* to ./viewer/three/addons/
+- Changed import URL from map to relative URL in all those files using powershell script ./viewer/three/fiximport.ps1
+- Copied ./viewer/three/addons/loaders to ./viewer/three/VOXLoader.js
+- Modified ./viewer/three/VOXLoader.js so it is compatible with more Vox files
+- Created ./viewer/draco/draco_worker.js from ./viewer/three/addons/libs/draco/* using powershell script ./viewer/draco/using draco_worker.ps1, it does this because the loader does this dynamically, which is not allowed in content script context
+- Created ./viewer/draco/gltf/draco_worker.js from ./viewer/three/addons/libs/draco/gltf/* using powershell script ./viewer/draco/gltf/using draco_worker.ps1, it does this because the loader does this dynamically, which is not allowed in content script context
 
 ---
 
