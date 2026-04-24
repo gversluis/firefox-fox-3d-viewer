@@ -15,7 +15,7 @@ View a wide range of 3D formats directly in your browser, like 3DM (Rhino 3D), 3
 - ✨ **Material presets** — switch between Default, Color, Cartoon, Flat, and a selection of materials
 - 📷 **PNG export** — render and download a screenshot of the current view
 - 💾 **Download button** — last but not least, download the original file
-- 🤝 Open source **LGPL license** — you can modify the code for your fittings
+- 🤝 Open source **AGPL license** — you can modify the code for your fittings
 
 ---
 
