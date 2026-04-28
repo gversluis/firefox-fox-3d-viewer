@@ -95,9 +95,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
       browser.tabs.onUpdated.addListener(function listener(tabId, info) {
           if (tabId === tab.id && info.status === "complete") {
               // browser.tabs.onUpdated.removeListener(listener);
-              if (tab.url == message.url) {
-                browser.tabs.sendMessage(tabId, message);
-              }
+              browser.tabs.get(tabId).then( tab => {
+                if (tab.url == message.url) {
+                  browser.tabs.sendMessage(tabId, message);
+                }
+              });
           }
       });
     };
