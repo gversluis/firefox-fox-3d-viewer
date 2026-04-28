@@ -13,6 +13,7 @@ export const settings = {
   stubExtensions: [],
   stubUrl: [],
 };
+
 loadSettings(defaultSettings, newSettings => Object.assign(settings, newSettings) );
 const tabUrlCache = new Map();
 
@@ -42,6 +43,17 @@ browser.action.onClicked.addListener((event) => {
   });
   */
 });
+
+function getFingerprintId(buffer) {
+    const data = new Uint8Array(buffer);
+    const len = data.length;
+    let hash = 0;
+    const step = Math.max(1, Math.floor(len / 16));
+    for (let i = 0; i < len; i += step) {
+        hash = (hash * 31 + data[i]) | 0;
+    }
+    return len + ":" + (hash >>> 0).toString(16);
+}
 
 function getUrl(url='') {
   const ext = url.split("?")[0]?.split("#")[0]?.split('.')?.pop()?.toLowerCase();
@@ -77,26 +89,29 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type == 'RELOAD') {
     Object.assign(settings, message.settings);
   } else {
-    const viewerUrl = getUrl(message.filename);
+    message.cacheId = getFingerprintId(message.data);
+    message.url = getUrl(message.filename) + "?fox3dViewerId=" + message.cacheId;
     const onLoad = function(tab) {
       browser.tabs.onUpdated.addListener(function listener(tabId, info) {
           if (tabId === tab.id && info.status === "complete") {
-              browser.tabs.onUpdated.removeListener(listener);
-              browser.tabs.sendMessage(tabId, message);
+              // browser.tabs.onUpdated.removeListener(listener);
+              if (tab.url == message.url) {
+                browser.tabs.sendMessage(tabId, message);
+              }
           }
       });
     };
     if (message.type === 'FROM_PAGE') {
-      browser.tabs.create({ url: viewerUrl }).then(onLoad);
+      browser.tabs.create({ url: message.url }).then(onLoad);
     } else {
       if (sender?.tab?.id >= 0) {
         try {
-          browser.tabs.update(sender.tab.id, { url: viewerUrl }).then(onLoad);
+          browser.tabs.update(sender.tab.id, { url: message.url }).then(onLoad);
         } catch (e) {
           console.warn('Failed to update tab:', e);
         }
       } else {
-        browser.tabs.create({ url: viewerUrl });
+        browser.tabs.create({ url: message.url });
       }
     }
   }
@@ -111,37 +126,6 @@ browser.downloads.onCreated.addListener((downloadItem) => {
     browser.downloads.cancel(downloadItem.id).catch(() => {});
   }
 });
-*/
-// does not detect blobs
-/*
-chrome.webRequest.onHeadersReceived.addListener(
-  (details) => {
-    const contentTypeRegex = /^Content-Type$/i;
-    console.log("Fetch detected:", details.url, details.responseHeaders.find(header => header.name?.match(contentTypeRegex)), details);
-    if (is3dFile(details.url)) {
-      const contentTypeHeader = details.responseHeaders.find(header => header.name?.toLowerCase() == 'content-type');
-      console.log("Fetch 3D file detected:", details.url, details, contentTypeHeader);
-      if (!contentTypeHeader || contentTypeHeader.value?.toLowerCase().search('text/html')==-1) {
-        contentTypeHeader ? contentTypeHeader.value = "text/plain; charset=ISO-8859-1" : details.responseHeaders.push({ name: 'Content-Type', value: "text/plain; charset=ISO-8859-1" });   // make it open in browser
-        const contentDispositionRegex = /^Content-Disposition$/i;
-        const contentDispositionHeader = details.responseHeaders.find(header => header.name?.match(contentDispositionRegex));
-        const filename = contentDispositionHeader?.match(/filename\*?=("([^"]*)|[^\s]*)/)?.findLast( e => e );
-        contentDispositionHeader ? contentDispositionHeader.value = "inline" : details.responseHeaders.push({ name: 'Content-Disposition', value: "inline" });   // make it open in browser
-        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
-          if (tabId === details.tabId && info.status === "complete") {
-            chrome.tabs.sendMessage(details.tabId, { type: '3d', filename: filename });
-            chrome.tabs.onUpdated.removeListener(listener);
-          }
-        });
-      }
-    }
-    return { responseHeaders: details.responseHeaders };
-  },
-  // Firefox cannot fire onHeadersReceived for local files.
-  { urls: ["<all_urls>"], types: ["main_frame", "sub_frame"] },
-  // The blocking option is required to modify the response headers in detectJSON.
-  ["blocking", "responseHeaders"],
-);
 */
 
 // test URLs:
@@ -163,17 +147,26 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i) & 0xff;
         // console.log('xhr', xhr);
         // console.log('download', [bytes[0].toString(16),bytes[1].toString(16),bytes[2].toString(16),bytes[3].toString(16),bytes[4].toString(16),bytes[5].toString(16),bytes[6].toString(16),bytes[7].toString(16),bytes[8].toString(16),bytes[9].toString(16)]);
+        const message = {
+            filename: getFilename(details.url),
+            data: bytes.buffer,
+        }
+        message.cacheId = getFingerprintId(message.data);
+        message.url = getUrl(details.url) + "?fox3dViewerId=" + message.cacheId;
         browser.tabs.onUpdated.addListener(function listener(tabId, info) {
             if (tabId === details.tabId && info.status === "complete") {
-                browser.tabs.onUpdated.removeListener(listener);
-                browser.tabs.sendMessage(tabId, { filename: getFilename(details.url), data: bytes.buffer} );
+                // browser.tabs.onUpdated.removeListener(listener);
+                browser.tabs.get(tabId).then( tab => {
+                  if (tab.url == message.url) {
+                    browser.tabs.sendMessage(tabId, message);
+                  }
+                });
             }
         });
-        const viewerUrl = getUrl(details.url);
-        console.log("Redirect", viewerUrl);
+        console.log("Redirect", message.url);
         return { 
           // cancel: true,
-          redirectUrl: viewerUrl,
+          redirectUrl: message.url,
         };
       }
     }
@@ -187,43 +180,3 @@ browser.webNavigation.onBeforeNavigate.addListener(
       if (details.url) { tabUrlCache.set(details.tabId, details.url); }
   },
 );
-
-/*
-browser.webNavigation.onBeforeNavigate.addListener(
-  (details) => {
-    if (is3dFile(details.url)) {
-      console.log("onBeforeNavigate 3D file detected:", details.url, details);
-      const request = new XMLHttpRequest();
-      request.open('GET', details.url, false);
-      request.send();
-      const viewerUrl = browser.runtime.getURL(`viewer.html?url=${encodeURIComponent(details.url)}`);
-      if (details.tabId >= 0) {
-        try {
-          browser.tabs.update(details.tabId, { url: viewerUrl });
-        } catch (e) {
-          console.warn('Failed to update tab:', e);
-        }
-      } else {
-        browser.tabs.create({ url: viewerUrl });
-      }
-    }
-    return { responseHeaders: details.responseHeaders };
-  },
-);
-
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.url && is3dFile(changeInfo.url)) {
-      console.log("Tab 3D file detected:", changeInfo.url, changeInfo);
-      const viewerUrl = browser.runtime.getURL(`viewer.html?url=${encodeURIComponent(changeInfo.url)}`);
-      browser.tabs.create({ url: viewerUrl });
-      if (tabId >= 0) {
-        console.log('Closing tab:', tabId);
-        try {
-          chrome.tabs.remove(tabId);
-        } catch (e) {
-          console.warn('Failed to close tab:', e);
-        }
-      }
-    }
-});
-*/
