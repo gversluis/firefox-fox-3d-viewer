@@ -174,7 +174,7 @@ Q: On Fennec (Firefox for Android) my model disappears<br>
 Q: The viewer does not start at all<br>
 **A: Go to Add-ons manager, add-on options, and Grant permission to access all websites**
 
-Q: I do not see anything
+Q: I do not see anything<br>
 **A: Go to Add-ons manager, add-on options, scroll to the bottom. There should be a Fox 3D viewer logo. If not then there might be a rendering problem.**
 
 Q: My Rhino 3D model (.3dm) does not load<br>
