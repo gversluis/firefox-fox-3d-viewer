@@ -162,21 +162,20 @@ The next steps describe how Three.js was modified for use in this extension:
 ## 🚫 Known Limitations
 
 - **`.3dm` (Rhino)** requires page-context execution (WASM + `new Function()`) and cannot be loaded directly inside the extension sandbox; it is routed to a stub page
-- Page reload does not work since the model is only in the viewer's memory which is lost at a reload, press back and open the file again
-- Pressing back and forward does not work since the model is only in the viewers memory which is lost at a reload, press back and open the file again
+- **On Fennec (Firefox for Android) models sometimes disappear. Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page.**
 
 ---
 
 ## 🚨 Troubleshooting
+
+Q: On Fennec (Firefox for Android) my model disappears
+**A: Sometimes Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page.**
 
 Q: The viewer does not start at all<br>
 **A: Go to Add-ons manager, add-on options, and Grant permission to access all websites**
 
 Q: I do not see anything
 **A: Go to Add-ons manager, add-on options, scroll to the bottom. There should be a Fox 3D viewer logo. If not then there might be a rendering problem.**
-
-Q: When I refresh the page my model is gone<br>
-**A: The viewer has the model in memory which is gone on a refresh. Press back and open the file again.**
 
 Q: My Rhino 3D model (.3dm) does not load<br>
 **A: Go to Add-ons manager, add-on options, try https://www.example.org/ as Stub URL**
