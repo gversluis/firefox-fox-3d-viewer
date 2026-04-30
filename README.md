@@ -168,7 +168,7 @@ The next steps describe how Three.js was modified for use in this extension:
 
 ## 🚨 Troubleshooting
 
-Q: On Fennec (Firefox for Android) my model disappears
+Q: On Fennec (Firefox for Android) my model disappears<br>
 **A: Sometimes Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page.**
 
 Q: The viewer does not start at all<br>
