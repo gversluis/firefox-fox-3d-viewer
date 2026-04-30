@@ -22,12 +22,20 @@
       <div><input type="checkbox" name="permissions" id="permissions" value="permissions" checked><label for="permissions">Grant permission to access all websites</label></div>
     </section>
 
+    <section class="target">
+      <div class="title">Target</div>
+      <div class="details">
+        Select where to open the Fox 3D viewer.
+      </div>
+      <template id="target"><div><input type="radio" name="target" id="target${id}" value="${id}" checked><label for="target${id}">${label}</label></div></template>
+    </section>
+
     <section class="extensions">
       <div class="title">Display 3D files with the selected extensions</div>
       <div class="details">
         The selected file types will be displayed using <a href="https://threejs.org/">three.js</a> loaders.<br>
       </div>
-      <template id="extension"><div><input type="checkbox" name="extension" id="ext${ext}" value="${ext}" checked><label for="ext${ext}">${description} (.${ext})</label></div></template>
+      <template id="extension"><div><input type="checkbox" name="extension" id="ext${ext}" value="${ext}" checked><label for="ext${ext}">${label} (.${ext})</label></div></template>
     </section>
 
     <section class="pagescript" id="stub">
@@ -41,7 +49,7 @@
       <div class="details">
         These Three.js loaders use generated scripts.
       </div>
-      <template id="stubextension"><div><input type="checkbox" name="stubextension" id="stubext${ext}" value="${ext}" checked><label for="stubext${ext}">${description} (.${ext})</label></div></template>
+      <template id="stubextension"><div><input type="checkbox" name="stubextension" id="stubext${ext}" value="${ext}" checked><label for="stubext${ext}">${label} (.${ext})</label></div></template>
       <div class="title">Stub URL</div>
       <div class="details">
         The stub URL needs to be an existing URL which will be loaded before showing the 3D file. It won't affect browsing to the page itself.<br>

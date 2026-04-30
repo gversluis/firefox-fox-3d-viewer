@@ -36,10 +36,19 @@ export const stubExtensions = [
   '3dm',
 ]
 
+export const Target = {
+    EXISTING_TAB: { value: 'EXISTING_TAB', label: "Open in existing tab" },
+    NEW_NEXT_TAB: { value: 'NEW_NEXT_TAB', label: "Open in new tab next to existing if possible" },
+    NEW_PREV_TAB: { value: 'NEW_PREV_TAB', label: "Open in new tab previous to existing if possible" },
+    NEW_END_TAB: { value: 'NEW_END_TAB', label: "Open in new tab at the end if possible" },
+    NEW_WINDOW: { value: 'NEW_WINDOW', label: "Open in new window" },
+};
+
 export const defaultSettings = {
   extensions: Object.keys(supportedExtensions),
   stubExtensions: stubExtensions,
   stubUrl: 'https://www.example.org/',
+  target: Target.NEW_NEXT_TAB.value,
 };
 
 // warning: this is async, so settings are not directly loaded

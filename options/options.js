@@ -1,4 +1,4 @@
-import { supportedExtensions, stubExtensions, defaultSettings, loadSettings, saveSettings } from '../viewer/settings.js';
+import { supportedExtensions, stubExtensions, defaultSettings, loadSettings, saveSettings, Target } from '../viewer/settings.js';
 const settings = defaultSettings;
 loadSettings(settings, addOptions);
 
@@ -14,6 +14,7 @@ loadDemoViewer();
 
 function addOptions(settings) {
   document.getElementById('stuburl').value = settings.stubUrl;
+  addTargets(Target);
   addExtensionList(settings.extensions);
   addStubExtensionList(settings.stubExtensions);
 
@@ -63,34 +64,51 @@ async function requestOptionalHostPermission(host, enable, onAfter) {
   return true;
 }
 
+function addTargets(targets) {
+  const template = document.querySelector('template#target');
+  Object.keys(Target).reverse().forEach( e => {
+      const o = Target[e];
+      const clone = document.importNode(template.content, true);
+      const div = clone.querySelector('div');
+      div.innerHTML = div.innerHTML.replaceAll('${id}', o.value);
+      div.innerHTML = div.innerHTML.replaceAll('${label}', o.label);
+      const input = clone.querySelector('input[type=radio]');
+      input.checked = o.value == settings.target;
+      input.addEventListener('click', save);
+      template.after( clone );
+  });
+}
+
 function addExtensionList(checkedExtensions) {
-  const extensionTemplate = document.querySelector('template#extension');
-  // console.log('Fox 3D template', extensionTemplate, supportedExtensions);
+  const template = document.querySelector('template#extension');
+  // console.log('Fox 3D template', template, supportedExtensions);
   Object.keys(supportedExtensions).reverse().forEach( e => {
       if (!stubExtensions.includes(e)) {
-        const clone = document.importNode(extensionTemplate.content, true);
+        const clone = document.importNode(template.content, true);
         const div = clone.querySelector('div');
         div.innerHTML = div.innerHTML.replaceAll('${ext}', e);
-        div.innerHTML = div.innerHTML.replaceAll('${description}', supportedExtensions[e]);
-        clone.querySelector('input[type=checkbox]').checked=checkedExtensions.includes(e);
-        extensionTemplate.after( clone );
+        div.innerHTML = div.innerHTML.replaceAll('${label}', supportedExtensions[e]);
+        const input = clone.querySelector('input[type=checkbox]');
+        input.checked=checkedExtensions.includes(e);
+        input.addEventListener('click', save);
+        template.after( clone );
       }
   });
-  document.querySelectorAll('input[name=extension]').forEach( e => e.addEventListener('click', save) );
 }
 
 function addStubExtensionList(checkedExtensions) {
-  const stubExtensionTemplate = document.querySelector('template#stubextension');
-  // console.log('Fox 3D template', stubExtensionTemplate);
+  const template = document.querySelector('template#stubextension');
+  // console.log('Fox 3D template', template);
   stubExtensions.forEach( e => {
-      const clone = document.importNode(stubExtensionTemplate.content, true);
+      const clone = document.importNode(template.content, true);
       const div = clone.querySelector('div');
       div.innerHTML = div.innerHTML.replaceAll('${ext}', e);
-      div.innerHTML = div.innerHTML.replaceAll('${description}', supportedExtensions[e]);
-      clone.querySelector('input[type=checkbox]').checked=checkedExtensions.includes(e);
-      stubExtensionTemplate.after( clone );
+      div.innerHTML = div.innerHTML.replaceAll('${label}', supportedExtensions[e]);
+      const input = clone.querySelector('input[type=checkbox]');
+      input.checked=checkedExtensions.includes(e);
+      input.addEventListener('click', save);
+      template.after( clone );
   });
-  document.querySelectorAll('input[name=stubextension]').forEach( e => e.addEventListener('click', save) );
 }
 
 function addRangeEventHandler(triggersClick) {
@@ -196,6 +214,7 @@ function loadDemoViewer(target='.viewer', model='Fox.vox') {
 
 async function save() {
   const settings = await browser.storage.local.get();
+  const target = document.querySelector('input[name=target]:checked')?.value;
   const extensions = [...document.querySelectorAll('input[name=extension]:checked,input[name=stubextension]:checked')].map( i => i.value);
   const stubExtensions = [...document.querySelectorAll('input[name=stubextension]:checked')].map( i => i.value);
   const stubUrl = document.getElementById('stuburl').value || document.getElementById('stuburl').placeholder;
@@ -204,6 +223,7 @@ async function save() {
       extensions,
       stubExtensions,
       stubUrl,
+      target,
   });
   console.log('Fox 3D save', settings);
   saveSettings(settings);

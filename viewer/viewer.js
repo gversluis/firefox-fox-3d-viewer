@@ -330,7 +330,7 @@ function loadModel(ext, buffer, callback) {
             throw new Error(e);
         });
         break;
-      case 'lwo':   // TODO: still buggy Must have a compiled fragment shader attached:  'assign' : cannot convert from 'const int' to 'highp float'
+      case 'lwo':
         loader = new LWOLoader(manager); 
         loader.load( url, function ( object  ) {
             console.log("Loaded lwo", object );
@@ -342,7 +342,7 @@ function loadModel(ext, buffer, callback) {
             throw new Error(e);
         });
         break;
-      case 'md2':   // TODO error: Cross-Origin Request Blocked: The Same Origin Policy disallows reading the remote resource at undefinedblob:moz-extension://8a607227-4840-4598-9a73-77f1144e582f/8d8e33ad-2ad1-48aa-a4b2-80eb889a3698. (Reason: CORS request not http).
+      case 'md2':
         loader = new MD2Loader(manager);
         loader.load( url, function ( geometry  ) {
             console.log("Loaded md2", geometry );

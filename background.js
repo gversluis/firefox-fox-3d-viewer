@@ -6,12 +6,13 @@
  */
  
 
-import { defaultSettings, loadSettings } from './viewer/settings.js';
+import { defaultSettings, loadSettings, Target } from './viewer/settings.js';
 // do not catch anything before loading settings
 export const settings = {
   extensions: [],
   stubExtensions: [],
   stubUrl: [],
+  target: Target.NEW_NEXT_TAB.value,
 };
 
 loadSettings(defaultSettings, newSettings => Object.assign(settings, newSettings) );
@@ -84,41 +85,69 @@ function is3dFile(url) {
   return settings.extensions?.includes(ext) ? hasHttpOrHttpsProtocolOrIsRelative(url) : false;
 }
 
+function getOnViewerTabLoad(message, windowId) {
+  return function(tab) {
+    browser.tabs.onUpdated.addListener(function listener(tabId, info, tab) {
+        console.log("TABS UPDATED", tabId, info, tab);
+        if (tabId === tab.id && info.status === "complete") {
+            // browser.tabs.onUpdated.removeListener(listener); // disabled since a refresh needs to trigger this too, that is why the URL must be unique
+            if (tab.url == message.url) {
+              browser.tabs.sendMessage(tabId, message);
+            }
+        }
+    }, { urls: [message.url] });
+  };
+};
+
+function openView(filename, message, tabId) {
+  message.cacheId = getFingerprintId(message.data);
+  message.url = getUrl(filename) + "?fox3dViewerId=" + message.cacheId;
+  const tabProperties = {
+      url: message.url,
+  };
+  const hasTabId = typeof tabId === 'number';
+  if (hasTabId && settings.target != Target.NEW_WINDOW.value) tabProperties.openerTabId = tabId;
+  const decideView = (message, tabId) => {
+    console.log('decide view', message, tabId);
+    switch (settings.target) {   // all make string because switch is type sensitive
+      case Target.EXISTING_TAB.value: 
+        hasTabId ? browser.tabs.update(tabId, { url: message.url }).then(getOnViewerTabLoad(message)) : browser.tabs.create(tabProperties).then(getOnViewerTabLoad(message));;
+        break;
+      case Target.NEW_NEXT_TAB.value: 
+      case Target.NEW_PREV_TAB.value: 
+      case Target.NEW_END_TAB.value: 
+        browser.tabs.create(tabProperties).then(getOnViewerTabLoad(message));
+        break;
+      case Target.NEW_WINDOW.value:
+        browser.windows.create(tabProperties).then(getOnViewerTabLoad(message));
+        break;
+      default:
+        console.error("Fox 3D viewer has unknown target in settings:", settings.target, Target);
+        browser.tabs.create(tabProperties).then(getOnViewerTabLoad(message));   // fall back to default
+    }
+  };
+  setTimeout(function() {
+    if (hasTabId && (settings.target == Target.NEW_NEXT_TAB.value || settings.target == Target.NEW_PREV_TAB.value)) {
+      browser.tabs.get(tabId).then( tab => {
+        tabProperties.index = settings.target == Target.NEW_NEXT_TAB.value ? tab?.index + 1 : tab?.index;
+        decideView(message, tabId);
+      });
+    } else {
+      decideView(message, tabId);
+    }
+  }, 0);
+}
+
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('onMessage', message);
+  console.log('onMessage', message, sender);
   if (message.type == 'RELOAD') {
     Object.assign(settings, message.settings);
   } else {
-    message.cacheId = getFingerprintId(message.data);
-    message.url = getUrl(message.filename) + "?fox3dViewerId=" + message.cacheId;
-    const onLoad = function(tab) {
-      browser.tabs.onUpdated.addListener(function listener(tabId, info) {
-          if (tabId === tab.id && info.status === "complete") {
-              // browser.tabs.onUpdated.removeListener(listener);
-              browser.tabs.get(tabId).then( tab => {
-                if (tab.url == message.url) {
-                  browser.tabs.sendMessage(tabId, message);
-                }
-              });
-          }
-      });
-    };
-    if (message.type === 'FROM_PAGE') {
-      browser.tabs.create({ url: message.url }).then(onLoad);
-    } else {
-      if (sender?.tab?.id >= 0) {
-        try {
-          browser.tabs.update(sender.tab.id, { url: message.url }).then(onLoad);
-        } catch (e) {
-          console.warn('Failed to update tab:', e);
-        }
-      } else {
-        browser.tabs.create({ url: message.url });
-      }
-    }
+    openView(message.filename, message, sender?.tab?.id)
   }
 });
 
+// disabled catching downloads because you first still need to select a download folder and click save, and only then it opens in the viewer which is unexpected behaviour
 /*
 browser.downloads.onCreated.addListener((downloadItem) => {
   if (is3dFile(downloadItem.filename)) {
@@ -153,22 +182,11 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
             filename: getFilename(details.url),
             data: bytes.buffer,
         }
-        message.cacheId = getFingerprintId(message.data);
-        message.url = getUrl(details.url) + "?fox3dViewerId=" + message.cacheId;
-        browser.tabs.onUpdated.addListener(function listener(tabId, info) {
-            if (tabId === details.tabId && info.status === "complete") {
-                // browser.tabs.onUpdated.removeListener(listener);
-                browser.tabs.get(tabId).then( tab => {
-                  if (tab.url == message.url) {
-                    browser.tabs.sendMessage(tabId, message);
-                  }
-                });
-            }
-        });
+        openView(details.url, message, details.tabId)
         console.log("Redirect", message.url);
         return { 
-          // cancel: true,
-          redirectUrl: message.url,
+          cancel: true,
+          // redirectUrl: message.url,
         };
       }
     }
