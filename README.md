@@ -162,7 +162,7 @@ The next steps describe how Three.js was modified for use in this extension:
 ## 🚫 Known Limitations
 
 - **`.3dm` (Rhino)** requires page-context execution (WASM + `new Function()`) and cannot be loaded directly inside the extension sandbox; it is routed to a stub page
-- **On Fennec (Firefox for Android) models sometimes disappear. Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page.**
+- **On Fennec (Firefox for Android) models sometimes disappear.** Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page
 
 ---
 
