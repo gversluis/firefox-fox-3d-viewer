@@ -17,7 +17,8 @@ export const settings = {
 
 loadSettings(defaultSettings, newSettings => Object.assign(settings, newSettings) );
 const tabUrlCache = new Map();
-
+const isAndroid = navigator.userAgent.toLowerCase().includes("android");
+  
 browser.action.onClicked.addListener((event) => {
   browser.tabs.create({ url: browser.runtime.getURL(`viewer/upload.html`) });
   /*
@@ -95,7 +96,7 @@ function getOnViewerTabLoad(message, windowId) {
               browser.tabs.sendMessage(tabId, message);
             }
         }
-    }, { urls: [message.url] });
+    });
   };
 };
 
@@ -106,7 +107,7 @@ function openView(filename, message, tabId) {
       url: message.url,
   };
   const hasTabId = typeof tabId === 'number';
-  if (hasTabId && settings.target != Target.NEW_WINDOW.value) tabProperties.openerTabId = tabId;
+  if (!isAndroid && hasTabId && settings.target != Target.NEW_END_TAB.value && settings.target != Target.NEW_WINDOW.value) tabProperties.openerTabId = tabId;
   const decideView = (message, tabId) => {
     console.log('decide view', message, tabId);
     switch (settings.target) {   // all make string because switch is type sensitive
