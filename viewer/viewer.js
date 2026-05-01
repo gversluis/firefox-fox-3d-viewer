@@ -57,9 +57,13 @@ if (!isPageContext) {
 
 const glassMaterial = new THREE.MeshPhysicalMaterial({
     color: 0xffffff,
-    metalness: 0.25,
-    roughness: 0,
-    transmission: 1.0,
+    metalness: 0.1,
+    roughness: 0.05,
+    transmission: 1.0,  // transparency
+    thickness: 0.25,
+    ior: 1.5,              // index of refraction (glass ~1.5)
+    opacity: 1.0,
+    envMapIntensity: 0.2,
     side: THREE.DoubleSide,
     dispersion: 5,
 });
