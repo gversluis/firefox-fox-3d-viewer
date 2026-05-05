@@ -89,7 +89,6 @@ function is3dFile(url) {
 function getOnViewerTabLoad(message, windowId) {
   return function(tab) {
     browser.tabs.onUpdated.addListener(function listener(tabId, info, tab) {
-        console.log("TABS UPDATED", tabId, info, tab);
         if (tabId === tab.id && info.status === "complete") {
             // browser.tabs.onUpdated.removeListener(listener); // disabled since a refresh needs to trigger this too, that is why the URL must be unique
             if (tab.url == message.url) {
