@@ -4,7 +4,7 @@ import { OrbitControls } from './three/addons/controls/OrbitControls.js';
 import { HDRLoader } from './three/addons/loaders/HDRLoader.js';
 import { OutlineEffect } from './three/addons/effects/OutlineEffect.js';
 import { GUI } from './three/addons/libs/lil-gui.module.min.js';
-
+import { MeshTransmissionMaterial } from './three/MeshTransmissionMaterial.js';
 
 import { Rhino3dmLoader } from './three/addons/loaders/3DMLoader.js'; // 3dm
 import { TDSLoader } from './three/addons/loaders/TDSLoader.js';  // 3ds
@@ -55,16 +55,23 @@ if (!isPageContext) {
   });
 }
 
-const glassMaterial = new THREE.MeshPhysicalMaterial({
-    color: 0xffffff,
+const glassMaterial = Object.assign(new MeshTransmissionMaterial(10), {
     metalness: 0.1,
+    clearcoat: 0,
+    clearcoatRoughness: 0.05,
+    transmission: 1,
+    chromaticAberration: 0.03,
+    anisotrophicBlur: 0.1,
+    // Set to > 0 for diffuse roughness
     roughness: 0.05,
-    transmission: 1.0,  // transparency
     thickness: 0.25,
-    ior: 1.5,              // index of refraction (glass ~1.5)
-    opacity: 1.0,
+    ior: 1.5,
+    // Set to > 0 for animation
+    distortion: 0.1,
+    distortionScale: 0.2,
+    temporalDistortion: 0.2,
     envMapIntensity: 0.2,
-    side: THREE.DoubleSide,
+    
     dispersion: 5,
 });
 
@@ -826,7 +833,15 @@ function createGUI(type) {
       materialColor: '#CCCCCC',
       flatColors: false,
       outline: false,
-      png: () => window.open(renderer.domElement.toDataURL("image/png")),
+      png: () => {
+        renderer.domElement.toBlob( blob => {
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("download", document.getElementById('download')?.getAttribute('download')?.replace(/.\w+$/, '.png'));
+            link.setAttribute("href", url);
+            link.click();
+        }, "image/png");
+      }
     });
     
     gui.ids = {};
@@ -882,7 +897,9 @@ function createGUI(type) {
         "Default": () => setMaterial(false),
         "Color": setMaterialColor,
         'Cartoon': () => setMaterial(true, (material) => new THREE.MeshToonMaterial( { ...getMaterialProperties(material), gradientMap: threeTone } )),
+        'Matcap': () => setMaterial(true, (material) => new THREE.MeshMatcapMaterial( {...getMaterialProperties(material) } )),
         'Flat': () => setMaterial(true, (material) => new THREE.MeshBasicMaterial( {...getMaterialProperties(material), toneMapped: false } )),
+        'Wireframe': () => setMaterial(true, (material) => new THREE.MeshBasicMaterial( {...getMaterialProperties(material), wireframe: true } )),
         "Gold": () => setMaterial(true, () => goldMaterial),
         "Glass": () => setMaterial(true, () => glassMaterial),
     } ).name('Material').onChange(function(v) {
@@ -890,6 +907,7 @@ function createGUI(type) {
         v();
         render();
     });
+    
     gui.ids.materialColor = gui.addColor( guiData, 'materialColor' ).name( 'Material color' ).onChange( () => gui.ids.material.setValue(setMaterialColor) );
     gui.ids.outline = gui.add( guiData, 'outline').name( 'Outline' ).onChange( function(v) {
         if (v) {

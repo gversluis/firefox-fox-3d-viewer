@@ -189,6 +189,7 @@ Q: My model does not load (properly)<br>
 
 - [Three.js](https://threejs.org/) — 3D engine and most format loaders
 - [lil-gui](https://lil-gui.georgealways.com/) — GUI control panel
+- [drei](https://github.com/pmndrs/drei-vanilla) - MeshTransmissionMaterial is used for glass
 
 ---
 
