@@ -38,7 +38,7 @@ function upload(file) {
           filename: file.name,
           data: arrayBuffer,
         });
-		window.close();
+		// window.close();
     };
 }
 
