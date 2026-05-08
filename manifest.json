@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name"            : "Fox 3D viewer",
-  "version"         : "0.1.6",
+  "version"         : "0.1.7",
   "description"     : "View a wide range of 3D formats directly in your browser, like 3DM (Rhino 3D), 3DS, 3MF, DAE (COLLADA), DRC, FBX, GCODE, GLB, GLTF, KMZ, LWO, MD2, MPD, NRRD, OBJ (Wavefront), PDB, PLY, STL, USDZ, VOX, VTK, VTP, WRL, XYZ", 
   "homepage_url"    : "https://github.com/gversluis/firefox-fox-3d-viewer",
   "icons": {
@@ -30,7 +30,7 @@
   },
 
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; object-src 'none'; frame-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; worker-src 'self' blob: 'wasm-unsafe-eval'; img-src 'self' blob: https: filesystem:; media-src 'self' blob: https: filesystem:; connect-src blob: https: filesystem:; style-src 'self' blob: 'unsafe-inline' 'unsafe-hashes'; font-src 'self' data:; upgrade-insecure-requests;"
+    "extension_pages": "default-src 'self'; object-src 'none'; frame-src 'self'; script-src 'self' blob: 'wasm-unsafe-eval'; worker-src 'self' blob: 'wasm-unsafe-eval'; img-src 'self' blob: https: filesystem: data:; media-src 'self' blob: https: filesystem:; connect-src blob: https: filesystem:; style-src 'self' blob: 'unsafe-inline' 'unsafe-hashes'; font-src 'self' data:; upgrade-insecure-requests;"
   },
     
   "background" : {

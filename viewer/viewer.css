@@ -1,3 +1,11 @@
+:root {
+  --color-cyan-30: oklch(76% 0.14 205);
+  --threejs-accent: #00aaff;
+  --accent-color: var(--color-cyan-30);
+  --menu-background-color: rgba(0, 116, 173, 0.3);
+  --menu-border-color: #339;
+}
+
 html,
 body {
   height: 100%;
@@ -15,8 +23,13 @@ body {
   background-color: #000;
   color: #fff;
 }
+body>canvas {
+  position: absolute;
+  z-index: 1;
+}
 #download {
   position: absolute;
+  z-index: 2;
   display: flex;
   text-align: center;
   align-items: center;
@@ -25,53 +38,73 @@ body {
   max-width: 10cm;
   min-height: 1.5cm;
   bottom: calc(-1.5cm + 2px);
-  background-color: #0088ff;
+  background-color: var(--accent-color);
   border: 0px solid transparent;
   border-radius: 12px;  
   text-decoration: none;
   color: #ffffff;
 }
-#settings {
-  appearance: none;
-}
-label[for=settings] {
-  position: fixed;
-  top: 2px;
-  right: 2px;
-  font-size: 1cm;
-  margin-left: -10px;
-}
-#settings+.menu {
-  position: absolute;
-  box-sizing: border-box;
-  display: block;
-  right: -200px;
-  top: 1.5cm;
-  margin: 0;
-  border-radius: 6px 0 0 6px;
-  text-align: left;
-  background-color: #ccc;
-  overflow: hidden;
-  transition: right 500ms;
-}
-#settings+.menu>ul {
-  list-style-type: none;
-  padding: 6px;
-}
-#settings+.menu>ul>li {
-  padding: 6px;
-}
-
-#settings:checked+.menu {
-  right: 0;
-  transition: right 500ms;
-}
-.hamburger+.menu li {
-  margin: 0;
-  padding: 0;
-  border: 1px solid #ccc;	
-}
 .error {
   background-color: #600;
   color: #fff;
+}
+
+
+.lil-gui.root.closed > .title:before,
+.lil-gui.root.closed > .title:after {
+  border-color: var(--menu-border-color);
+}
+.lil-gui.root.closed > .title:after {
+  background-color: #fff;
+}
+.lil-gui.root > .title:before,
+.lil-gui.root > .title:after {
+  position: absolute;
+  right: 4px;
+  display: inline-block;
+  content: " ";
+  width: 24px;
+  height: 24px;
+  padding: 4px;
+  border: 1px solid var(--menu-border-color);
+  border-radius: 6px;
+  transition: 0.2s ease-in-out;
+}
+.lil-gui.root > .title:hover:before {
+  border-color: var(--accent-color);
+}
+.lil-gui.root > .title:hover:after {
+  background-color: var(--accent-color);
+}
+.lil-gui.root > .title:before {
+  background-color: var(--menu-background-color);
+}
+.lil-gui.root > .title:after {
+  mask: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path stroke="none" d="M0 0h24v24H0z" fill="none"></path><path d="M14 6m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path><path d="M4 6l8 0"></path><path d="M16 6l4 0"></path><path d="M8 12m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path><path d="M4 12l2 0"></path><path d="M10 12l10 0"></path><path d="M17 18m-2 0a2 2 0 1 0 4 0a2 2 0 1 0 -4 0"></path><path d="M4 18l11 0"></path><path d="M19 18l1 0"></path></svg>') 6px/24px no-repeat;
+  background-color: var(--accent-color);
+}
+body .lil-gui {
+  background-color: transparent;
+}
+body .lil-gui.root > .title {
+  width: 0;
+  margin-top: 10px;
+  font-size: 0;
+  height: calc(24px + 2*4px + 2*2px + 20px);
+  background: inherit !important;
+}
+body .lil-gui.root > .title:hover {
+  background: inherit;
+}
+body .lil-gui.root > .children {
+  height: auto !important;
+  background-color: var(--background-color);
+  margin-right: -15px;
+  padding: 15px;
+  border-radius: 20px 0 0 20px;
+  transition: 0.6s cubic-bezier(0.8, 0, 0.2, 1);;
+}
+body .lil-gui.closed > .children {
+  transform: translateX(100%);
+  opacity: 100%;
 }

@@ -83,7 +83,6 @@ const goldMaterial = new THREE.MeshPhysicalMaterial({
     clearcoatRoughness: 0.1,
 });
 
-
 function error(html) {
     document.querySelector('canvas')?.remove();
     const error = document.querySelector('.error');
@@ -114,15 +113,27 @@ function load(filename, buffer, target, dimensions) {
         model.castShadow = true;
         model.receiveShadow = true;
         
-        if (model.animations && model.animations.length) {
-            console.log("Animations", model.animations);
+        let animations = getAnimations(model);
+        if (animations?.length) {
+            console.log("Animations", animations);
+            animations.unshift({name: "None"});
+            guiData.animation = animations[0].name;
             const mixer = new THREE.AnimationMixer(model);
-            const clip = model.animations[0];
-            const action = mixer.clipAction(clip);
-            action.play();
-            // Save mixer for update loop
             mixers.push(mixer);
-            guiData.animate=true;
+            gui.ids.animation = replaceGuiController(gui.ids.animate, gui.add( guiData, 'animation', animations.map( a => a.name) ).name( 'Animation' ).onChange( function (v) {
+                const clip = animations[gui.ids.animation.$select.selectedIndex];
+                console.log('Selected animation', clip);
+                if (clip.tracks) {
+                    let newAction = mixer.existingAction(clip);
+                    if (!newAction) newAction = mixer.clipAction(clip);
+                    mixer.stopAllAction();
+                    newAction.play();
+                    guiData.animate=true;
+                    if (guiData.animate) animate();
+                } else {
+                    guiData.animate=false;
+                }
+            }));
         }
 
         try {
@@ -664,7 +675,7 @@ function init(type, notHuge, target, dimensions) {
     target.appendChild( renderer.domElement );
     dimensions ? resize(dimensions) : window.addEventListener( 'resize', resize );
     if (guiData.animate) animate();
-    gui.open();
+    // gui.open();
 }
 
 function addRenderer() {
@@ -761,6 +772,28 @@ function fitCameraToObject(camera, object, controls, offset = 1) {
   controls.update();
 }
 
+function replaceGuiController(oldController, newController) {
+    const gui = oldController.parent;
+    const oldRow = oldController.domElement;
+    const newRow = newController.domElement;
+    gui.$children.insertBefore(newRow, oldRow);
+    oldController.destroy();
+    return newController;
+}
+
+function getAnimations(model, depth = 0, result = []) {
+    if (depth>10) return;   // be safe because it is recursive
+    if (model.animations && model.animations.length) {
+        result.push.apply(result, model.animations);
+    }
+    model.traverse( function ( child ) {
+        if ( child.isMesh ) {
+            getAnimations(child, depth+1, result);
+        }
+    });
+    return result;
+}
+
 function setMaterial(enable=true, materialCallback, mesh=model, depth=0) {
     if (depth>3) return;
     mesh.traverse( c => {
@@ -825,8 +858,10 @@ function getMaterialProperties(material) {
 function createGUI(type) {
     if ( gui ) gui.destroy();
     gui = new GUI();
+    gui.close();
     Object.assign(guiData, {
       animate: false,
+      animation: null,
       background: "Color",
       backgroundColor: '#000000',
       material: "Default",
