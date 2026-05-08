@@ -1,5 +1,5 @@
 import * as THREE from '../../../three.module.js';
-import * as TSL from 'three/tsl';
+import * as TSL from '../../../three.tsl.js';
 
 // some helpers below are ported from Blender and converted to TSL
 
