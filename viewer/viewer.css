@@ -5,7 +5,6 @@
   --menu-background-color: rgba(0, 116, 173, 0.3);
   --menu-border-color: #339;
 }
-
 html,
 body {
   height: 100%;
@@ -26,6 +25,9 @@ body {
 body>canvas {
   position: absolute;
   z-index: 1;
+}
+a {
+  color: var(--accent-color);
 }
 #download {
   position: absolute;
@@ -104,10 +106,13 @@ body .lil-gui.root > .children {
   border-radius: 20px 0 0 20px;
   transition: 0.3s cubic-bezier(0.8, 0, 0.2, 1);;
 }
-body .lil-gui.closed > .children {
+body .lil-gui.root.closed > .children {
   transform: translateX(100%);
   opacity: 100%;
 }
 .lil-gui .controller .widget:not(:first-child) {
   margin-left: 4px;
+}
+.lil-gui .controller.developer .widget {
+  display: block;
 }
