@@ -56,11 +56,8 @@ import('../viewer/viewer.js').then(mod => {
     const res = mod.load( 'Fox.vox',  bytes.buffer, viewer, { width: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth, height: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth });
     const interval = setInterval(function() {
       // document.querySelector('.lil-gui').remove();
-      console.log('res', res);
-      if (res.gui?.ids?.cameraZ) {
-        res.gui.ids.cameraX.setValue(0.6);
-        res.gui.ids.cameraY.setValue(7);
-        res.gui.ids.cameraZ.setValue(20);
+      // console.log('res', res);
+      if (res.gui?.ids?.directionalLightIntensity) {
         res.gui.ids.directionalLightIntensity.setValue(3.7);
         res.gui.ids.directionalLightX.setValue(0);
         res.gui.ids.directionalLightY.setValue(10);

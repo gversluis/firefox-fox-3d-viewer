@@ -193,11 +193,8 @@ function loadDemoViewer(target='.viewer', model='Fox.vox') {
         const interval = setInterval(function() {
           if (count++>100) clearInterval(interval);
           // document.querySelector('.lil-gui').remove();
-          if (res.gui?.ids?.cameraZ) {
+          if (res.gui?.ids?.directionalLightIntensity) {
             console.log('Fox 3D loadDemoViewer', res);
-            res.gui.ids.cameraX.setValue(0.6);
-            res.gui.ids.cameraY.setValue(7);
-            res.gui.ids.cameraZ.setValue(20);
             res.gui.ids.directionalLightIntensity.setValue(3.7);
             res.gui.ids.directionalLightX.setValue(0);
             res.gui.ids.directionalLightY.setValue(10);
