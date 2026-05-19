@@ -173,9 +173,9 @@ The next steps describe how Three.js was modified for use in this extension:
 
 ## 🚨 Troubleshooting
 
-Q: Simplify does not work
-**A: Simplify helper from Three.js seems a bit buggy:**
-**- Small models tend to loose vertices**
+Q: Simplify does not work<br>
+**A: Simplify helper from Three.js seems a bit buggy:**<br>
+**- Small models tend to loose vertices**<br>
 **- Large models tend to simplify slowly**
 
 Q: On Fennec (Firefox for Android) my model disappears<br>
