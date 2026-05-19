@@ -10,11 +10,16 @@ View a wide range of 3D formats directly in your browser, like 3DM (Rhino 3D), 3
 
 - 🛡️ **Your data is yours** — no ads, no external monitoring, no measurements
 - 🔗 **Automatic link detection** — URLs ending with a 3D file extension automatically open in the viewer
-- 🪤 **In memory download links** — Blob: download links with a 3D file extension automatically open in the viewer
+- 🪤 **In memory link detection** — Blob: download links with a 3D file extension automatically open in the viewer
 - 📂 **Open local files** — click on the toolbar button to view local files in the viewer
-- ✨ **Material presets** — switch between Default, Color, Cartoon, Flat, and a selection of materials
+- 👁️ **Rotate, zoom, and move** — view as you like it by dragging the model and changing lights and camera
+- ✨ **Material presets** — switch between Default, Color, Cartoon, Flat, Wireframe, and a selection of materials
+- 🌅 **Backgrounds** — view your model against different backgrounds
+- 🥪️ **Isometric view** — switch between perspective and isometric view
 - 📷 **PNG export** — render and download a screenshot of the current view
-- 💾 **Download button** — last but not least, download the original file
+- 🖨️ **STL export** — convert your model to STL to 3D print
+- 🧊 **GLB export** — convert your model to GLB geometry which open in most 3D modeling tools
+- 💾 **Download original file** — last but not least, download the original file
 - 🤝 Open source **AGPL license** — you can modify the code for your fittings
 
 ---
@@ -60,7 +65,7 @@ A stub website is loaded as workaround. The extension is inserted so it loads as
 
 ## 📷 Screenshots
 
-<img src="/screenshots/vox.jpg" height="611" alt="Screenshot of Vox file opened in Fox 3D viewer" /> <a href="/screenshots/settings.png"><img src="/screenshots/settings.png" height="611" alt="Screenshot extension settings" /></a>
+<img src="/screenshots/vox.jpg" height="610" alt="Screenshot of Vox file opened in Fox 3D viewer" /> <a href="/screenshots/settings.png"><img src="/screenshots/settings.png" height="610" alt="Screenshot extension settings" /></a>
 
 ---
 
@@ -168,6 +173,11 @@ The next steps describe how Three.js was modified for use in this extension:
 
 ## 🚨 Troubleshooting
 
+Q: Simplify does not work
+**A: Simplify helper from Three.js seems a bit buggy:**
+**- Small models tend to loose vertices**
+**- Large models tend to simplify slowly**
+
 Q: On Fennec (Firefox for Android) my model disappears<br>
 **A: Sometimes Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page.**
 
@@ -188,7 +198,7 @@ Q: My model does not load (properly)<br>
 ## 📚 Dependencies
 
 - [Three.js](https://threejs.org/) — 3D engine and most format loaders
-- [lil-gui](https://lil-gui.georgealways.com/) — GUI control panel
+- [lil-gui](https://lil-gui.georgealways.com/) — GUI control panel that came with Three.js
 - [drei](https://github.com/pmndrs/drei-vanilla) - MeshTransmissionMaterial is used for glass
 
 ---
