@@ -1,10 +1,17 @@
 "use strict";
 import * as THREE from './three.module.js';
+
 import { OrbitControls } from './three/addons/controls/OrbitControls.js';
 import { HDRLoader } from './three/addons/loaders/HDRLoader.js';
+import { EXRLoader } from './three/addons/loaders/EXRLoader.js';
 import { OutlineEffect } from './three/addons/effects/OutlineEffect.js';
 import { GUI } from './three/addons/libs/lil-gui.module.min.js';
 import { MeshTransmissionMaterial } from './three/MeshTransmissionMaterial.js';
+import { SimplifyModifier } from './three/addons/modifiers/SimplifyModifier.js';
+import * as BufferGeometryUtils from './three/addons/utils/BufferGeometryUtils.js';
+import { STLExporter } from './three/addons/exporters/STLExporter.js';
+import { GLTFExporter } from './three/addons/exporters/GLTFExporter.js';
+import * as TextureUtils from './three/addons/utils/WebGLTextureUtils.js';
 
 import { Rhino3dmLoader } from './three/addons/loaders/3DMLoader.js'; // 3dm
 import { TDSLoader } from './three/addons/loaders/TDSLoader.js';  // 3ds
@@ -36,12 +43,22 @@ import { VTKLoader } from './three/addons/loaders/VTKLoader.js';
 import { XYZLoader } from './three/addons/loaders/XYZLoader.js';
 // TODO: .step, .stp    Standard for the Exchange of Product Data; used in engineering and manufacturing.   https://github.com/Roadinforest/occt-step-viewer-web ?
 // TODO: .blend         Native format for Blender, a popular 3D modeling tool.      Python parser: https://github.com/gabdube/tinyblend
-// TODO: import STLExporter from 'three/addons/exporters/STLExporter.js';
 
 const timer = new THREE.Timer();
 timer.connect( document );
 
-let model=null, camera=null, scene=null, renderer=null, labelRenderer=null, controls=null, loader=null, gui=null, mixers = [], guiData = {};
+let model=null,
+    camera=null,
+    perspectiveCamera=null,
+    orthographicCamera=null,
+    scene=null,
+    renderer=null,
+    labelRenderer=null,
+    controls=null,
+    loader=null,
+    gui=null,
+    mixers = [],
+    guiData = {};
 
 const isPageContext = (typeof browser === 'undefined');
 console.log("Viewer executed in context", isPageContext ? 'page script' : 'content script');
@@ -105,7 +122,7 @@ function load(filename, buffer, target, dimensions) {
     }
 
     const ext = filename.split("?")[0]?.split("#")[0]?.split('.')?.pop()?.toLowerCase();
-    createGUI(ext);
+    addGui(ext, dimensions);
 
     loadModel(ext, buffer, (m) => {
         model = m;
@@ -145,19 +162,19 @@ function load(filename, buffer, target, dimensions) {
             console.warn("Failed to set glass material (if there was any)", e);
         }
 
-        const box = new THREE.Box3().setFromObject(model);
-        const sphere = new THREE.Sphere();
-        box.getBoundingSphere(sphere);
-        const MAX_RADIUS = 50000;
-        console.log('radius',sphere.radius);
-        init(ext, sphere.radius < MAX_RADIUS, target, dimensions);
+        init(ext, target, dimensions);
         if (ext != 'wrl') {
             normalizeMeshIfTooSmall(model);
-            fitCameraToObject(camera, model, controls);
+            fitCameraToObject(perspectiveCamera, model, controls);
         } else {
             console.warn("Object too large, skipping auto-fit:", sphere.radius);
         }
         scene.add(model);
+        
+        if (!gui.ids.model) gui.ids.model = insertGuiControllerAfter(gui.ids.controls, gui.addFolder( 'Model' ).close());
+        gui.ids.modelRotateX = replaceGuiController(gui.ids.modelRotateX, gui.ids.model.add(model.rotation, 'x', -Math.PI, Math.PI).name('Rotate over X').onChange( () => { render(); } ));
+        gui.ids.modelRotateY = replaceGuiController(gui.ids.modelRotateY, gui.ids.model.add(model.rotation, 'y', -Math.PI, Math.PI).name('Rotate over Y').onChange( () => { render(); } ));
+        gui.ids.modelRotateZ = replaceGuiController(gui.ids.modelRotateZ, gui.ids.model.add(model.rotation, 'z', -Math.PI, Math.PI).name('Rotate over Z').onChange( () => { render(); } ));
         render();
     });
     return {
@@ -198,9 +215,10 @@ function loadModel(ext, buffer, callback) {
         loader.load( url, function ( object ) {
             console.log('Loaded 3dm', object);
             const layers = object.userData.layers;
+            gui.ids.simplify.destroy();
             for ( let i = 0; i < layers.length; i ++ ) {
                 const layer = layers[ i ];
-                gui.ids['layer'+layer.name] = gui.add( layer, 'visible' ).name( layer.name ).onChange( function ( val ) {
+                gui.ids['layer'+layer.name] = insertGuiControllerBefore(gui.ids.exportpng, gui.add( layer, 'visible' ).name( layer.name ).onChange( function ( val ) {
                     const name = this.object.name;
                     console.log('3dm change', name);
                     scene.traverse( function ( child ) {
@@ -215,7 +233,7 @@ function loadModel(ext, buffer, callback) {
                         }
                     } );
                     renderer.render(scene, camera);
-                } );
+                } ));
             }
             callback(object);
         },null, function(e) {
@@ -406,12 +424,13 @@ function loadModel(ext, buffer, callback) {
         loader.load( url, function ( model ) {
             console.log("Loaded ldraw", model );
             model.rotation.x = Math.PI;
+            gui.ids.simplify.destroy();
             guiData.buildingStep = model?.userData?.numBuildingSteps > 1 ? model.userData.numBuildingSteps - 1 : 1;
-            gui.ids.buildingStep = gui.add( guiData, 'buildingStep', 0, guiData.buildingStep ).step( 1 ).name( 'Building step' ).onChange( updateObjectsVisibility );
+            gui.ids.buildingStep = insertGuiControllerBefore(gui.ids.exportpng, gui.add( guiData, 'buildingStep', 0, guiData.buildingStep ).step( 1 ).name( 'Building step' ).onChange( updateObjectsVisibility ));
             if ( model?.userData?.numBuildingSteps-1 <= 0 ) gui.ids.buildingStep.disable();
 
-            gui.ids.displayLines = gui.add( guiData, 'displayLines' ).name( 'Display Lines' ).onChange( updateObjectsVisibility );
-            gui.ids.conditionalLines = gui.add( guiData, 'conditionalLines' ).name( 'Conditional Lines' ).onChange( updateObjectsVisibility );
+            gui.ids.displayLines = insertGuiControllerBefore(gui.ids.exportpng, gui.add( guiData, 'displayLines' ).name( 'Display Lines' ).onChange( updateObjectsVisibility ));
+            gui.ids.conditionalLines = insertGuiControllerBefore(gui.ids.exportpng, gui.add( guiData, 'conditionalLines' ).name( 'Conditional Lines' ).onChange( updateObjectsVisibility ));
             callback(model);
         },null, function(e) {
             error(`<h1>Error loading ${ext}<br>${e}</h1>`);
@@ -445,34 +464,11 @@ function loadModel(ext, buffer, callback) {
             const sliceX = volume.extractSlice( 'x', Math.floor( volume.RASDimensions[ 0 ] / 2 ) );
             group.add( sliceX.mesh );
 
-            gui.ids.sliceX = gui.add( sliceX, 'index', 0, volume.RASDimensions[ 0 ], 1 ).name( 'indexX' ).onChange( function () {
-                sliceX.repaint.call( sliceX );
-                render();
-            });
-            gui.ids.sliceY = gui.add( sliceY, 'index', 0, volume.RASDimensions[ 1 ], 1 ).name( 'indexY' ).onChange( function () {
-                sliceY.repaint.call( sliceY );
-                render();
-            } );
-            gui.ids.sliceZ = gui.add( sliceZ, 'index', 0, volume.RASDimensions[ 2 ], 1 ).name( 'indexZ' ).onChange( function () {
-                sliceZ.repaint.call( sliceZ );
-                render();
-            } );
-            gui.ids.volumeLowerThreshold = gui.add( volume, 'lowerThreshold', volume.min, volume.max, 1 ).name( 'Lower Threshold' ).onChange( function () {
-                volume.repaintAllSlices();
-                render();
-            } );
-            gui.ids.volumeUpperThreshold = gui.add( volume, 'upperThreshold', volume.min, volume.max, 1 ).name( 'Upper Threshold' ).onChange( function () {
-                volume.repaintAllSlices();
-                render();
-            } );
-            gui.ids.volumeWindowLow = gui.add( volume, 'windowLow', volume.min, volume.max, 1 ).name( 'Window Low' ).onChange( function () {
-                volume.repaintAllSlices();
-                render();
-            } );
-            gui.ids.volumeWindowHigh = gui.add( volume, 'windowHigh', volume.min, volume.max, 1 ).name( 'Window High' ).onChange( function () {
-                volume.repaintAllSlices();
-                render();
-            } );
+            gui.ids.sliceX = insertGuiControllerBefore(gui.ids.exportpng, gui.add( sliceX, 'index', 0, volume.RASDimensions[ 0 ], 1 ).name( 'indexX' ).onChange( function () { sliceX.repaint.call( sliceX ); render(); }));
+            gui.ids.sliceY = insertGuiControllerBefore(gui.ids.exportpng, gui.add( sliceY, 'index', 0, volume.RASDimensions[ 1 ], 1 ).name( 'indexY' ).onChange( function () { sliceY.repaint.call( sliceY ); render(); }));
+            gui.ids.sliceZ = insertGuiControllerBefore(gui.ids.exportpng, gui.add( sliceZ, 'index', 0, volume.RASDimensions[ 2 ], 1 ).name( 'indexZ' ).onChange( function () { sliceZ.repaint.call( sliceZ ); render(); }));
+            gui.ids.volumeLowerThreshold = insertGuiControllerBefore(gui.ids.exportpng, gui.add( volume, 'lowerThreshold', volume.min, volume.max, 1 ).name( 'Lower Threshold' ).onChange( function () { volume.repaintAllSlices(); render(); }));
+            gui.ids.volumeUpperThreshold = insertGuiControllerBefore(gui.ids.exportpng, gui.add( volume, 'upperThreshold', volume.min, volume.max, 1 ).name( 'Upper Threshold' ).onChange( function () { volume.repaintAllSlices(); render(); }));
             callback(group);
 
         },null, function(e) {
@@ -492,13 +488,14 @@ function loadModel(ext, buffer, callback) {
       case 'pcd':
         loader = new PCDLoader(manager);
         loader.load( url, function ( points ) {
+            gui.ids.simplify.destroy();
             points.geometry.center();
             points.geometry.rotateX( Math.PI );
             gui.ids.material.hide();
             gui.ids.materialColor.hide();
             gui.ids.outline.hide();
-            gui.ids.pointSize = gui.add( points.material, 'size', 0.001, 0.1 ).onChange( render );
-            gui.ids.pointColor = gui.addColor( points.material, 'color' ).onChange( render );
+            gui.ids.pointSize = insertGuiControllerBefore(gui.ids.exportpng, gui.add( points.material, 'size', 0.001, 0.1 ).onChange( render ));
+            gui.ids.pointColor = insertGuiControllerBefore(gui.ids.exportpng, gui.addColor( points.material, 'color' ).onChange( render ));
             callback(points);
         },null, function(e) {
             error(`<h1>Error loading ${ext}<br>${e}</h1>`);
@@ -572,10 +569,10 @@ function loadModel(ext, buffer, callback) {
             const voxSettings = { frame: 0 };
             const frames = mesh.setFrame(0)
             if (frames>1) {
-                gui.ids.frame = gui.add( voxSettings, 'frame', 0, frames, 1 ).onChange( frame => {
+                gui.ids.frame = insertGuiControllerBefore(gui.ids.exportpng, gui.add( voxSettings, 'frame', 0, frames, 1 ).onChange( frame => {
                     mesh.setFrame(frame);
                     render();
-                });
+                }));
             }
             callback(mesh);
         },null, function(e) {
@@ -608,6 +605,7 @@ function loadModel(ext, buffer, callback) {
       case 'xyz':
         loader = new XYZLoader(manager);
         loader.load( url, function ( geometry ) {
+            gui.ids.simplify.destroy();
             geometry.center();
             const vertexColors = ( geometry.hasAttribute( 'color' ) === true );
             const material = new THREE.PointsMaterial( { size: 0.1, vertexColors: vertexColors } );
@@ -615,8 +613,8 @@ function loadModel(ext, buffer, callback) {
             gui.ids.material.hide();
             gui.ids.materialColor.hide();
             gui.ids.outline.hide();
-            gui.ids.pointSize = gui.add( points.material, 'size', 0.001, 0.1 ).onChange( render );
-            gui.ids.pointColor = gui.addColor( points.material, 'color' ).onChange( render );
+            gui.ids.pointSize = insertGuiControllerBefore(gui.ids.exportpng, gui.add( points.material, 'size', 0.001, 0.1 ).onChange( render ));
+            gui.ids.pointColor = insertGuiControllerBefore(gui.ids.exportpng, gui.addColor( points.material, 'color' ).onChange( render ));
             callback( points );
         });
         break;
@@ -648,34 +646,72 @@ function bufferContains(buffer, needle, maxBytes) {
   return false;
 }
 
-function init(type, notHuge, target, dimensions) {
+function init(type, target, dimensions) {
     console.log('viewer.js init');
 
     addRenderer()
 
     scene = new THREE.Scene();
-    if (notHuge) {
-    }
-    // scene.environment = pmremGenerator.fromScene( environment, 0.04 ).texture;
-    // environment.dispose();
-    // scene.fog = new THREE.Fog( 0x050505, 2.5, 10 );
-
-    camera ??= new THREE.PerspectiveCamera( 60, dimensions ? dimensions.width / dimensions.height : window.innerWidth / window.innerHeight, 1, 1000 );
-    camera.position.set( 0, 0, 70 );
-    scene.add(camera);
-    gui.ids.camera = gui.addFolder( 'Camera' ).close();
-    gui.ids.cameraX = gui.ids.camera.add(camera.position, 'x', -10, 10).onChange( () => { render(); controls.update(); } );
-    gui.ids.cameraY = gui.ids.camera.add(camera.position, 'y', -10, 20).onChange( () => { render(); controls.update(); } );
-    gui.ids.cameraZ = gui.ids.camera.add(camera.position, 'z', -10, 50).onChange( () => { render(); controls.update(); } );
-
-    addLights(camera, model);
-    addControls(camera);
+    camera = addPerspectiveCamera(scene, dimensions);
+    addIsoMetricCamera(scene, dimensions);
     
+    addControls(camera);
+    addLights(camera, model);
+    addDevelopers();
     if (!target) target = document.body;
     target.appendChild( renderer.domElement );
     dimensions ? resize(dimensions) : window.addEventListener( 'resize', resize );
     if (guiData.animate) animate();
     // gui.open();
+}
+
+function addPerspectiveCamera(scene, dimensions) {
+    perspectiveCamera = new THREE.PerspectiveCamera( 60, dimensions ? dimensions.width / dimensions.height : window.innerWidth / window.innerHeight, 1, 1000 );
+    perspectiveCamera.position.set( 0, 40, 70 );
+    scene.add(perspectiveCamera);
+    return perspectiveCamera;
+}
+
+function addIsoMetricCamera(scene, dimensions) {
+    const d = 20;
+    const aspect = dimensions ? dimensions.width / dimensions.height : window.innerWidth / window.innerHeight;
+    orthographicCamera = new THREE.OrthographicCamera( - d * aspect, d * aspect, d, - d, 1, 1000 );
+    orthographicCamera.rotation.order = 'YXZ';
+
+    scene.add(orthographicCamera);
+    return orthographicCamera;
+}
+
+function fitCameraToObject(camera, object, controls, offset = 1) {
+  const box = new THREE.Box3().setFromObject(object);
+  const center = box.getCenter(new THREE.Vector3());
+  const sphere = box.getBoundingSphere(new THREE.Sphere());
+  const fov = camera.fov * (Math.PI / 180);
+  let distance = sphere.radius / Math.sin(fov / 2);
+
+  const aspect = camera.aspect;
+  const horizontalFov = 2 * Math.atan(Math.tan(fov / 2) * aspect);
+  const distanceHorizontal = sphere.radius / Math.sin(horizontalFov / 2);
+  distance = Math.max(distance, distanceHorizontal);
+  distance *= offset;
+
+  const direction = new THREE.Vector3()
+    .subVectors(perspectiveCamera.position, controls.target)
+    .normalize();
+
+  perspectiveCamera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
+
+  camera.near = distance / 100;
+  camera.far = distance * 100;
+  camera.updateProjectionMatrix();
+
+  camera.lookAt(center);
+
+  controls.target.copy(center);
+  controls.minDistance = distance * 0.10;
+  controls.maxDistance = distance * 4;
+
+  controls.update();
 }
 
 function addRenderer() {
@@ -721,8 +757,36 @@ function addLights(camera, target) {
 function addControls(camera) {
     controls = new OrbitControls( camera, renderer.domElement );    // replace with https://github.com/yomotsu/camera-controls ?
     controls.addEventListener( 'change', render ); // use if there is no animation loop
-    controls.enableDamping = true;
+    controls.enableDamping = false;
     controls.enablePan = true;
+    if (!gui.ids.controls) gui.ids.controls = gui.addFolder( 'Camera' ).close();
+
+    const state = {
+        azimuth: 0,
+        polar: Math.PI / 4
+    };
+    function applyOrbitRotation() {
+        const radius = controls.object.position.distanceTo(controls.target);
+        const spherical = new THREE.Spherical(radius, state.polar, state.azimuth);
+        const offset = new THREE.Vector3().setFromSpherical(spherical);
+        controls.object.position.copy(controls.target).add(offset);
+        controls.object.lookAt(controls.target);
+        controls.update();
+    }
+    gui.ids.controls.add(state, 'azimuth', -Math.PI, Math.PI, 0.01).name('Yaw').onChange(applyOrbitRotation);
+    gui.ids.controls.add(state, 'polar', 0.01, Math.PI - 0.01, 0.01).name('Pitch').onChange(applyOrbitRotation);
+    gui.ids.controlsX = replaceGuiController(gui.ids.controlsX, gui.ids.controls.add(controls.target, 'x', -20, 20).onChange( () => { render(); controls.update(); } ));
+    gui.ids.controlsY = replaceGuiController(gui.ids.controlsY, gui.ids.controls.add(controls.target, 'y', -20, 20).onChange( () => { render(); controls.update(); } ));
+    gui.ids.controlsZ = replaceGuiController(gui.ids.controlsZ, gui.ids.controls.add(controls.target, 'z', -20, 20).onChange( () => { render(); controls.update(); } ));
+}
+
+function addDevelopers() {
+    gui.ids.developer = gui.addFolder( 'Developer information' ).close();
+    const template = document.querySelector('template#license')?.content;
+    if (template) {
+        const node = document.importNode(template, true);
+        gui.ids.developer.$children.appendChild(node);
+    }
 }
 
 function normalizeMeshIfTooSmall(mesh, minSize=10, targetSize=10) {
@@ -740,45 +804,43 @@ function normalizeMeshIfTooSmall(mesh, minSize=10, targetSize=10) {
     return mesh;
 }
 
-function fitCameraToObject(camera, object, controls, offset = 1) {
-  const box = new THREE.Box3().setFromObject(object);
-  const center = box.getCenter(new THREE.Vector3());
-  const sphere = box.getBoundingSphere(new THREE.Sphere());
-  const fov = camera.fov * (Math.PI / 180);
-  let distance = sphere.radius / Math.sin(fov / 2);
+function insertGuiControllerAfter(otherController, newController) {
+    if (otherController?.domElement?.parentElement) { // parentElement is not set when destroyed
+        const gui = otherController.parent;
+        const otherRow = otherController.domElement;
+        const newRow = newController.domElement;
+        otherRow.after(newRow);
+    }
+    return newController;
+}
 
-  const aspect = camera.aspect;
-  const horizontalFov = 2 * Math.atan(Math.tan(fov / 2) * aspect);
-  const distanceHorizontal = sphere.radius / Math.sin(horizontalFov / 2);
-  distance = Math.max(distance, distanceHorizontal);
-  distance *= offset;
-
-  const direction = new THREE.Vector3()
-    .subVectors(camera.position, controls.target)
-    .normalize();
-
-  camera.position.copy(center.clone().add(direction.multiplyScalar(distance)));
-
-  camera.near = distance / 100;
-  camera.far = distance * 100;
-  camera.updateProjectionMatrix();
-
-  camera.lookAt(center);
-
-  controls.target.copy(center);
-  controls.minDistance = distance * 0.10;
-  controls.maxDistance = distance * 4;
-
-  controls.update();
+function insertGuiControllerBefore(otherController, newController) {
+    if (otherController?.domElement?.parentElement) { // parentElement is not set when destroyed
+        const gui = otherController.parent;
+        const otherRow = otherController.domElement;
+        const newRow = newController.domElement;
+        otherRow.parentElement.insertBefore(newRow, otherRow);
+    }
+    return newController;
 }
 
 function replaceGuiController(oldController, newController) {
-    const gui = oldController.parent;
-    const oldRow = oldController.domElement;
-    const newRow = newController.domElement;
-    gui.$children.insertBefore(newRow, oldRow);
-    oldController.destroy();
+    if (oldController?.domElement?.parentElement) { // parentElement is not set when destroyed
+        insertGuiControllerAfter(newController, oldController);
+        oldController.destroy();
+    }
     return newController;
+}
+
+function groupGuiControllers(controllers, title=null) {
+    const firstDom = controllers.shift()?.domElement;
+    if (title) {
+        const nameElement = firstDom.querySelector(':scope>.name') || document.createElement("div");
+        nameElement.classList.add('name');
+        nameElement.textContent = title;
+        firstDom.insertBefore(nameElement, firstDom.firstChild);
+    }
+    controllers.forEach(c => firstDom.append(c.domElement.querySelector(':scope>.widget')));
 }
 
 function getAnimations(model, depth = 0, result = []) {
@@ -797,7 +859,7 @@ function getAnimations(model, depth = 0, result = []) {
 function setMaterial(enable=true, materialCallback, mesh=model, depth=0) {
     if (depth>3) return;
     mesh.traverse( c => {
-        if ( c.isMesh ) {
+        if ( c.isMesh && c.geometry) {
             if ( Array.isArray( c.material ) ) {
                 if (!c.materialBackup) c.materialBackup = c.material.map( (material) => material.clone() );
                 c.material = enable ? c.materialBackup.map( materialCallback ) : c.materialBackup.map( (material) => material.clone() );
@@ -805,6 +867,7 @@ function setMaterial(enable=true, materialCallback, mesh=model, depth=0) {
                 if (!c.materialBackup) c.materialBackup = c.material.clone();
                 c.material = enable ? materialCallback( c.materialBackup ) : c.materialBackup.clone();
             }
+        } else {
             setMaterial(enable, materialCallback, c, ++depth);
         }
     });
@@ -818,6 +881,7 @@ function animate() {
         model.rotation.y += 0.01;
         model.rotation.z += 0;
     }
+    controls.update();
     timer.update();
     const delta = timer.getDelta();
     mixers.forEach((mixer) => mixer.update(delta));
@@ -843,19 +907,46 @@ function render() {
 function getMaterialProperties(material) {
     console.log('material', material);
     const m = {
+        alphaMap: material.alphaMap,
+        alphaTest: material.alphaTest,
+        aoMap: material.aoMap,
+        blending: material.blending,
+        bumpMap: material.bumpMap,
         color: new THREE.Color(material.color),
-        polygonOffset: material.polygonOffset,
-        polygonOffsetUnits: material.polygonOffsetUnits,
-        polygonOffsetFactor: material.polygonOffsetFactor,
+        displacementMap: material.displacementMap,
+        emissive: material.emissive,
+        emissiveMap: material.emissiveMap,
+        envMap: material.envMap,
+        envMapIntensity: material.envMapIntensity,
+        fog: material.fog,
+        map: material.map,
+        metalness: material.metalness,
+        metalnessMap: material.metalnessMap,
+        name: material.name,
+        normalMap: material.normalMap,
         opacity: material.opacity,
-        transparent: material.transparent,
-        depthWrite: material.depthWrite,
+        roughness: material.roughness,
+        roughnessMap: material.roughnessMap,
+        side: material.side,
         toneMapped: material.toneMapped,
+        transparent: material.transparent,
+        vertexColors: material.vertexColors,
+        visible: material.visible,
+        wireframe: material.wireframe,
     }
     return m;
 }
 
-function createGUI(type) {
+function addGui(type, dimensions) {
+    function saveBlob(blob, ext) {
+        if (ext>'' && ext[0] != '.') ext = '.' + ext;
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("download", document.getElementById('download')?.getAttribute('download')?.replace(/.\w+$/, ext));
+        link.setAttribute("href", url);
+        link.click();
+    }
+    
     if ( gui ) gui.destroy();
     gui = new GUI();
     gui.close();
@@ -868,31 +959,62 @@ function createGUI(type) {
       materialColor: '#CCCCCC',
       flatColors: false,
       outline: false,
+      simplify: 0,
+      isometric: false,
       png: () => {
-        renderer.domElement.toBlob( blob => {
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("download", document.getElementById('download')?.getAttribute('download')?.replace(/.\w+$/, '.png'));
-            link.setAttribute("href", url);
-            link.click();
-        }, "image/png");
-      }
+        renderer.domElement.toBlob( blob => saveBlob(blob, '.png'), "image/png");
+      },
+      stl: () => {
+        const exporter = new STLExporter();
+        const buffer = exporter.parse( model, { binary: true } );
+        const blob = new Blob( [ buffer ], { type: 'application/octet-stream' } );
+        saveBlob(blob, '.stl');
+      },
+      glb: () => {
+        const exporter = new GLTFExporter().setTextureUtils( TextureUtils );
+        exporter.parse(
+            model,
+            function(buffer) {
+                const blob = new Blob( [ buffer ], { type: 'application/octet-stream' } );
+                saveBlob(blob, '.glb');
+            },
+            function(error) {
+                error(`<h1>Could not save glb<br>${error}</h1>`);
+            },
+            {
+                trs: false,
+                onlyVisible: true,
+                binary: true,
+                maxTextureSize: Infinity,
+                // TODO: animations: [<AnimationClip>]
+                includeCustomExtensions: true,
+            }
+        );
+      },
     });
     
     gui.ids = {};
     gui.ids.animate = gui.add( guiData, 'animate' ).name( 'Animate' ).onChange( function () { if (guiData.animate) animate() } );
     gui.ids.background = gui.add( guiData, 'background', { 
         "Color": 'backgroundColor',
-        "Kandao": "./textures/kandao3.jpg",
-        "World": "./textures/land_ocean_ice_cloud_2048.jpg",
-        "Sunrise": "./textures/equirectangular/spruit_sunrise_2k.hdr.jpg",
-        "Ice Planet": "./textures/equirectangular/ice_planet_close.jpg",
+        "Texture Disturb": "./textures/disturb.jpg",
+        "Texture Hardwood": "./textures/hardwood2_diffuse.jpg",
+        "Texture Jade": "./textures/jade.jpg",
         "Blouberg Sunrise": "./textures/equirectangular/blouberg_sunrise_2_1k.hdr",
-        "Skies": "./textures/equirectangular/752-hdri-skies-com_1k.hdr",
-        "Lobe": "./textures/equirectangular/lobe.hdr",
+        "Decaying room": "./textures/2294472375_24a3b8ef46_o.jpg",
+        "Esplanade": "./textures/equirectangular/royal_esplanade_2k.hdr.jpg",
+        "Glass building": "./textures/equirectangular/lobe.hdr",
+        "Ice Planet": "./textures/equirectangular/ice_planet_close.jpg",
+        "Meeting room": "./textures/equirectangular.png",
+        "Moonless golf": "./textures/equirectangular/moonless_golf_1k.hdr",
         "Overpass": "./textures/equirectangular/pedestrian_overpass_1k.hdr",
         "Quarry": "./textures/equirectangular/quarry_01_1k.hdr",
-        "Esplanade": "./textures/equirectangular/royal_esplanade_2k.hdr.jpg",
+        "Rocky beach": "./textures/kandao3.jpg",
+        "San Giuseppe bridge": "./textures/equirectangular/san_giuseppe_bridge_2k.hdr.jpg",
+        "Snowy beach": "./textures/equirectangular/752-hdri-skies-com_1k.hdr",
+        "Sunrise": "./textures/equirectangular/spruit_sunrise_1k.hdr",
+        "Venice sunset": "./textures/equirectangular/venice_sunset_1k.hdr",
+        "World": "./textures/land_ocean_ice_cloud_2048.jpg",
     } ).name('Background').onChange(function(v) {
         if (v && v.toString().match(/\.(hdr)$/)) {
             const loader = new HDRLoader();
@@ -900,6 +1022,15 @@ function createGUI(type) {
               texture.mapping = THREE.EquirectangularReflectionMapping;
               scene.background = texture;
               scene.environment = texture; // important for reflections too
+              render(); // since loader is async
+            });
+        } else if (v && v.toString().match(/\.(exr)$/)) {
+            const loader = new EXRLoader();
+            loader.load(v, (texture) => {
+              texture.mapping = THREE.EquirectangularReflectionMapping;
+              scene.background = texture;
+              scene.environment = texture; // important for reflections too
+              render(); // since loader is async
             });
         } else if (v && v.toString().match(/\.(jpg|png|gif)$/)) {
             const loader = new THREE.TextureLoader();
@@ -933,7 +1064,9 @@ function createGUI(type) {
         "Color": setMaterialColor,
         'Cartoon': () => setMaterial(true, (material) => new THREE.MeshToonMaterial( { ...getMaterialProperties(material), gradientMap: threeTone } )),
         'Matcap': () => setMaterial(true, (material) => new THREE.MeshMatcapMaterial( {...getMaterialProperties(material) } )),
-        'Flat': () => setMaterial(true, (material) => new THREE.MeshBasicMaterial( {...getMaterialProperties(material), toneMapped: false } )),
+        'Smooth': () => setMaterial(true, (material) => new THREE.MeshStandardMaterial({ ...getMaterialProperties(material), flatShading: false }) ),
+        'FlatShading': () => setMaterial(true, (material) => new THREE.MeshStandardMaterial({ ...getMaterialProperties(material), flatShading: true }) ),
+        'Flat': () => setMaterial(true, (material) => new THREE.MeshBasicMaterial( { toneMapped: false } )),
         'Wireframe': () => setMaterial(true, (material) => new THREE.MeshBasicMaterial( {...getMaterialProperties(material), wireframe: true } )),
         "Gold": () => setMaterial(true, () => goldMaterial),
         "Glass": () => setMaterial(true, () => glassMaterial),
@@ -960,7 +1093,99 @@ function createGUI(type) {
         }
         render();
     } );
-    gui.ids.download = gui.add( guiData, 'png').name( 'Download PNG' );
+    gui.ids.simplify = gui.add( guiData, 'simplify', 0, 0.99, 0.1).name( 'Simplify' ).onFinishChange( (removeAmount) => {
+        simplify(model, removeAmount);
+        render();
+    });
+
+    gui.ids.isometric = gui.add( guiData, 'isometric').name( 'Isometric' ).onChange( function(isIsoMetric) {
+        function syncPerspectiveCamera() {
+            perspectiveCamera.position.copy(camera.position);
+            perspectiveCamera.quaternion.copy(camera.quaternion);
+            perspectiveCamera.updateMatrixWorld(true);
+        }
+        if (isIsoMetric) {
+            function updateOrthoFrustum() {
+                const distance = perspectiveCamera.position.distanceTo(controls.target);
+                const vFov = THREE.MathUtils.degToRad(perspectiveCamera.fov);
+                const height = 2 * Math.tan(vFov / 2) * distance;
+                const width = height * perspectiveCamera.aspect;
+                orthographicCamera.left = -width / 2;
+                orthographicCamera.right = width / 2;
+                orthographicCamera.top = height / 2;
+                orthographicCamera.bottom = -height / 2;
+
+                orthographicCamera.near = perspectiveCamera.near;
+                orthographicCamera.far = perspectiveCamera.far;
+                orthographicCamera.position.copy(perspectiveCamera.position);
+                orthographicCamera.quaternion.copy(perspectiveCamera.quaternion);
+
+                orthographicCamera.updateProjectionMatrix();
+                orthographicCamera.updateMatrixWorld(true);
+
+                camera = orthographicCamera;
+                controls.object = camera;
+                
+                controls.addEventListener('change', syncPerspectiveCamera);
+                
+            }
+            updateOrthoFrustum();
+        } else {
+            controls.removeEventListener('change', syncPerspectiveCamera);
+            perspectiveCamera.position.copy(orthographicCamera.position);
+            perspectiveCamera.quaternion.copy(orthographicCamera.quaternion);
+            camera = perspectiveCamera;
+            controls.object = camera;
+        }
+        camera.updateMatrixWorld(true);
+        render();
+    });
+
+    gui.ids.exportpng = gui.add( guiData, 'png').name( 'PNG' );
+    gui.ids.exportstl = gui.add( guiData, 'stl').name( 'STL' );
+    gui.ids.exportglb = gui.add( guiData, 'glb').name( 'GLB' );
+    groupGuiControllers([gui.ids.exportpng, gui.ids.exportstl, gui.ids.exportglb], 'Download');
+    // TODO: append licenses
+}
+
+function simplify(model, removeAmount, weightedExponent = 1.5) {
+    const modifier = new SimplifyModifier();
+    const maxDepth = 100;
+    function getGeometryAttributesPositionCount(mpart, depth=0) {
+        if (depth>maxDepth) return false;   // be safe because it is recursive
+        let totalGeometry = (mpart.backup?.attributes?.position?.count || mpart.geometry?.attributes?.position?.count || 0) ** weightedExponent;
+        if (!totalGeometry) {
+            mpart.traverse && mpart.traverse( c => {
+                if (c.geometry) {
+                    totalGeometry += getGeometryAttributesPositionCount(c, depth+1);
+                }
+            });
+        }
+        return totalGeometry;
+    }
+    function simplify(mpart, totalGeometry, depth=0) {
+        if (depth>maxDepth) return false;   // be safe because it is recursive
+        if (mpart.geometry) {
+            // console.log("Found geometry at depth", depth, mpart.geometry);
+            if (mpart.backup) mpart.geometry = mpart.backup;
+            if (!mpart.backup) mpart.backup = mpart.geometry;
+            let geometryCount = (mpart.geometry?.attributes?.position?.count || 0) ** weightedExponent;
+            if (geometryCount / totalGeometry>0) {
+                const count = Math.floor( mpart.geometry?.attributes?.position?.count * removeAmount *  (geometryCount / totalGeometry) ); 
+                mpart.geometry = modifier.modify( BufferGeometryUtils.mergeVertices( mpart.geometry ), count );
+            }
+            return true;
+        } else {
+            mpart.traverse && mpart.traverse( c => {
+                if (c.geometry) {
+                    simplify(c,  totalGeometry, depth+1);
+                }
+            });
+        }
+        return false;
+    }
+    let totalGeometry = getGeometryAttributesPositionCount(model);
+    simplify(model, totalGeometry);
 }
 
 function updateObjectsVisibility() {
