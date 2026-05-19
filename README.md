@@ -168,6 +168,7 @@ The next steps describe how Three.js was modified for use in this extension:
 
 - **`.3dm` (Rhino)** requires page-context execution (WASM + `new Function()`) and cannot be loaded directly inside the extension sandbox; it is routed to a stub page
 - **On Fennec (Firefox for Android) models sometimes disappear.** Fennec suddenly refreshes and clears memory (this seems to happen especially with bigger models and moving them). Open the model again from the previous page
+- **Simplify slow or removes vertices.** The Three.js Simplify helper is slow on complex models and removes vertices on models with little vertices
 
 ---
 
