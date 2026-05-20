@@ -36,6 +36,10 @@ export const stubExtensions = [
   '3dm',
 ]
 
+export const experimental = {
+  'simplify': 'Simplify: reduce number of vertices through menu',
+}
+
 export const Target = {
     EXISTING_TAB: { value: 'EXISTING_TAB', label: "Open in existing tab" },
     NEW_NEXT_TAB: { value: 'NEW_NEXT_TAB', label: "Open in new tab next to existing if possible" },
@@ -48,6 +52,7 @@ export const defaultSettings = {
   extensions: Object.keys(supportedExtensions),
   stubExtensions: stubExtensions,
   stubUrl: 'https://www.example.org/',
+  experimental: [],
   target: Target.NEW_NEXT_TAB.value,
 };
 

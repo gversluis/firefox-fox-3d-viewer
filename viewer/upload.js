@@ -53,7 +53,7 @@ import('../viewer/viewer.js').then(mod => {
     const bytes = new Uint8Array(len);
     for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i) & 0xff;
 	const viewer = document.querySelector('.viewer');
-    const res = mod.load( 'Fox.vox',  bytes.buffer, viewer, { width: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth, height: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth });
+    const res = mod.load( 'Fox.vox',  bytes.buffer, null, viewer, { width: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth, height: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth });
     const interval = setInterval(function() {
       // document.querySelector('.lil-gui').remove();
       // console.log('res', res);

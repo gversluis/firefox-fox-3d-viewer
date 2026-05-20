@@ -67,7 +67,7 @@ if (!isPageContext) {
   browser.runtime.onMessage.addListener(function listener(message) {
     console.log("Viewer received data", message);
     browser.runtime.onMessage.removeListener(listener);
-    load( message.filename, message.data );
+    load( message.filename, message.data, message.settings );
     // TODO: store data in cookie or something so page can be refreshed?
   });
 }
@@ -106,7 +106,7 @@ function error(html) {
     error ? error.innerHTML = html : console.error(html);
 }
 
-function load(filename, buffer, target, dimensions) {
+function load(filename, buffer, settings, target, dimensions) {
     console.log('module viewer.js', (isPageContext ? "Page context" : "Content script context"));
 
     // const params = new URLSearchParams(window.location.search);
@@ -122,7 +122,7 @@ function load(filename, buffer, target, dimensions) {
     }
 
     const ext = filename.split("?")[0]?.split("#")[0]?.split('.')?.pop()?.toLowerCase();
-    addGui(ext, dimensions);
+    addGui(ext, settings, dimensions);
 
     loadModel(ext, buffer, (m) => {
         model = m;
@@ -215,7 +215,7 @@ function loadModel(ext, buffer, callback) {
         loader.load( url, function ( object ) {
             console.log('Loaded 3dm', object);
             const layers = object.userData.layers;
-            gui.ids.simplify.destroy();
+            gui?.ids?.simplify?.destroy();
             for ( let i = 0; i < layers.length; i ++ ) {
                 const layer = layers[ i ];
                 gui.ids['layer'+layer.name] = insertGuiControllerBefore(gui.ids.exportpng, gui.add( layer, 'visible' ).name( layer.name ).onChange( function ( val ) {
@@ -424,7 +424,7 @@ function loadModel(ext, buffer, callback) {
         loader.load( url, function ( model ) {
             console.log("Loaded ldraw", model );
             model.rotation.x = Math.PI;
-            gui.ids.simplify.destroy();
+            gui?.ids?.simplify?.destroy();
             guiData.buildingStep = model?.userData?.numBuildingSteps > 1 ? model.userData.numBuildingSteps - 1 : 1;
             gui.ids.buildingStep = insertGuiControllerBefore(gui.ids.exportpng, gui.add( guiData, 'buildingStep', 0, guiData.buildingStep ).step( 1 ).name( 'Building step' ).onChange( updateObjectsVisibility ));
             if ( model?.userData?.numBuildingSteps-1 <= 0 ) gui.ids.buildingStep.disable();
@@ -488,7 +488,7 @@ function loadModel(ext, buffer, callback) {
       case 'pcd':
         loader = new PCDLoader(manager);
         loader.load( url, function ( points ) {
-            gui.ids.simplify.destroy();
+            gui?.ids?.simplify?.destroy();
             points.geometry.center();
             points.geometry.rotateX( Math.PI );
             gui.ids.material.hide();
@@ -605,7 +605,7 @@ function loadModel(ext, buffer, callback) {
       case 'xyz':
         loader = new XYZLoader(manager);
         loader.load( url, function ( geometry ) {
-            gui.ids.simplify.destroy();
+            gui?.ids?.simplify?.destroy();
             geometry.center();
             const vertexColors = ( geometry.hasAttribute( 'color' ) === true );
             const material = new THREE.PointsMaterial( { size: 0.1, vertexColors: vertexColors } );
@@ -937,7 +937,7 @@ function getMaterialProperties(material) {
     return m;
 }
 
-function addGui(type, dimensions) {
+function addGui(type, settings, dimensions) {
     function saveBlob(blob, ext) {
         if (ext>'' && ext[0] != '.') ext = '.' + ext;
         const url = URL.createObjectURL(blob);
@@ -1093,10 +1093,12 @@ function addGui(type, dimensions) {
         }
         render();
     } );
-    gui.ids.simplify = gui.add( guiData, 'simplify', 0, 0.99, 0.1).name( 'Simplify' ).onFinishChange( (removeAmount) => {
-        simplify(model, removeAmount);
-        render();
-    });
+    if (settings?.experimental?.includes('simplify')) {
+        gui.ids.simplify = gui.add( guiData, 'simplify', 0, 0.99, 0.1).name( 'Simplify' ).onFinishChange( (removeAmount) => {
+            simplify(model, removeAmount);
+            render();
+        });
+    }
 
     gui.ids.isometric = gui.add( guiData, 'isometric').name( 'Isometric' ).onChange( function(isIsoMetric) {
         function syncPerspectiveCamera() {

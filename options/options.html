@@ -14,7 +14,7 @@
     <section class="Permissions">
       <div class="title">Permissions</div>
       <div class="details">
-        To detect requests to 3D files and to catch blobs (in memory files) this extension needs access to all pages.<br>
+        To detect requests to 3D files and to catch blobs (in memory files) this add-on needs access to all pages.<br>
         <br>
         You can disable this if you only want to upload local files.<br>
         If you disable this and want to view extensions which require a <a href="#stub">stub URL</a>, then do not forget to <a href="#permissionstuburl">grant access</a> to the stub URL at the bottom of this page.<br>
@@ -41,9 +41,9 @@
     <section class="pagescript" id="stub">
       <div class="title">Stub page</div>
       <div class="details">
-        Extensions are limited by a content security policy.<br>
-        This means extensions can not load on the fly generated scripts which some loaders use.<br>
-        Another website is loaded as workaround. The extension is inserted so it loads as a regular page.<br>
+        Add-ons are limited by a content security policy.<br>
+        This means add-ons can not load on the fly generated scripts which some loaders use.<br>
+        Another website is loaded as workaround. The add-on is inserted so it loads as a regular page.<br>
       </div>
       <div class="title">Use stub for 3D files with the selected extensions</div>
       <div class="details">
@@ -57,6 +57,14 @@
       </div>
       <div><input type="text" name="stuburl" id="stuburl" placeholder="https://www.example.org/"></div>
       <div><input type="checkbox" name="permissionstuburl" id="permissionstuburl" value="permissionstuburl" checked><label for="permissionstuburl">Grant permission to stub URL</label></div>
+    </section>
+
+    <section class="experimental">
+      <div class="title">Experimental features</div>
+      <div class="details">
+        Some features do not work so well. Those features are not required for the add-on to be functional. You can enable them if you know what you are doing.
+      </div>
+      <template id="experimental"><div><input type="checkbox" name="experimental" id="experimental${id}" value="${id}"><label for="experimental${id}">${label}</label></div></template>
     </section>
 
     <section class="pagescript">

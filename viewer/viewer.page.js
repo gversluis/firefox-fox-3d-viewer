@@ -4,7 +4,7 @@ window.addEventListener("message", (event) => {
   if (message.type === 'FROM_CONTENT_READY') {
     // console.log("Received ready", message);
     import(message.script).then(mod => {
-      mod.load( message.filename, message.data );
+      mod.load( message.filename, message.data, message.settings );
     });
   }
 });

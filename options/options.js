@@ -1,4 +1,4 @@
-import { supportedExtensions, stubExtensions, defaultSettings, loadSettings, saveSettings, Target } from '../viewer/settings.js';
+import { supportedExtensions, stubExtensions, experimental, defaultSettings, loadSettings, saveSettings, Target } from '../viewer/settings.js';
 const settings = defaultSettings;
 loadSettings(settings, addOptions);
 
@@ -17,6 +17,7 @@ function addOptions(settings) {
   addTargets(Target);
   addExtensionList(settings.extensions);
   addStubExtensionList(settings.stubExtensions);
+  addExperimental(settings.experimental);
 
   document.getElementById('permissions').addEventListener('click', event => requestOptionalHostPermission('<all_urls>', event.target.checked, loadPermissions));
   document.getElementById('permissionstuburl').addEventListener('click', event => requestOptionalHostPermission(document.getElementById('stuburl').value || document.getElementById('stuburl').placeholder, event.target.checked, loadPermissions));
@@ -111,6 +112,23 @@ function addStubExtensionList(checkedExtensions) {
   });
 }
 
+function addExperimental(checkedExperimental) {
+  const template = document.querySelector('template#experimental');
+  console.log('experimental', experimental, checkedExperimental, template);
+  Object.keys(experimental).reverse().forEach( e => {
+      if (!stubExtensions.includes(e)) {
+        const clone = document.importNode(template.content, true);
+        const div = clone.querySelector('div');
+        div.innerHTML = div.innerHTML.replaceAll('${id}', e);
+        div.innerHTML = div.innerHTML.replaceAll('${label}', experimental[e]);
+        const input = clone.querySelector('input');
+        input.checked=checkedExperimental.includes(e);
+        input.addEventListener('click', save);
+        template.after( clone );
+      }
+  });
+}
+
 function addRangeEventHandler(triggersClick) {
     console.log('Fox 3D addRangeEventHandler');
     var previouslyClicked = {};
@@ -187,7 +205,7 @@ function loadDemoViewer(target='.viewer', model='Fox.vox') {
       const bytes = new Uint8Array(len);
       for (let i = 0; i < len; i++) bytes[i] = binary.charCodeAt(i) & 0xff;
       const viewer = document.querySelector(target);
-      const res = mod.load( model,  bytes.buffer, viewer, { width: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth || window.innerWidth, height: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth  || window.innerWidth});
+      const res = mod.load( model,  bytes.buffer, null, viewer, { width: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth || window.innerWidth, height: Math.min(viewer.offsetWidth, viewer.offsetHeight) || viewer.offsetWidth  || window.innerWidth});
       let count = 0;
       if (res) {
         const interval = setInterval(function() {
@@ -215,12 +233,14 @@ async function save() {
   const extensions = [...document.querySelectorAll('input[name=extension]:checked,input[name=stubextension]:checked')].map( i => i.value);
   const stubExtensions = [...document.querySelectorAll('input[name=stubextension]:checked')].map( i => i.value);
   const stubUrl = document.getElementById('stuburl').value || document.getElementById('stuburl').placeholder;
+  const experimental = [...document.querySelectorAll('input[name=experimental]:checked')].map( i => i.value);
   // console.log('BEFORE SAVING', settings);
   Object.assign(settings, {
       extensions,
       stubExtensions,
       stubUrl,
       target,
+      experimental,
   });
   console.log('Fox 3D save', settings);
   saveSettings(settings);

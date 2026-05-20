@@ -92,6 +92,7 @@ function getOnViewerTabLoad(message, windowId) {
         if (tabId === tab.id && info.status === "complete") {
             // browser.tabs.onUpdated.removeListener(listener); // disabled since a refresh needs to trigger this too, that is why the URL must be unique
             if (tab.url == message.url) {
+              message.settings = settings;  // always use latest settings
               browser.tabs.sendMessage(tabId, message);
             }
         }
