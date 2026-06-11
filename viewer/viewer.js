@@ -826,7 +826,7 @@ function insertGuiControllerBefore(otherController, newController) {
 
 function replaceGuiController(oldController, newController) {
     if (oldController?.domElement?.parentElement) { // parentElement is not set when destroyed
-        insertGuiControllerAfter(newController, oldController);
+        insertGuiControllerAfter(oldController, newController);
         oldController.destroy();
     }
     return newController;
@@ -949,6 +949,7 @@ function addGui(type, settings, dimensions) {
     
     if ( gui ) gui.destroy();
     gui = new GUI();
+    console.log("Add GUI", gui);
     gui.close();
     Object.assign(guiData, {
       animate: false,
@@ -1071,8 +1072,12 @@ function addGui(type, settings, dimensions) {
         "Gold": () => setMaterial(true, () => goldMaterial),
         "Glass": () => setMaterial(true, () => glassMaterial),
     } ).name('Material').onChange(function(v) {
+        if (typeof v === 'string') {
+            console.log('material index', v, this._names.indexOf(v));
+            v = this._values[ this._names.indexOf(v) ];
+        }
         console.log("gui", this, gui, guiData, v);
-        v();
+        typeof v === 'function' ? v() : console.warn("Could set material", v);
         render();
     });
     
