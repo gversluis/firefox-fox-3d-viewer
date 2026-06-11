@@ -86,8 +86,6 @@ Since it did not exist I decided to create it. How hard could it be...
   * You can disable this if you only want to upload local files*
 - Fox 3D viewer requires access to the stub URL*
   * If you disable access to all websites and want to view extensions which require a stub URL, then do not forget to grant access to the stub URL
-- Access downloads
-  * Lets you download the file
 - webNavigation/webRequest/webRequestBlocking
   * Check the request URL and redirect to the viewer
 - Access to tabs

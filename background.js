@@ -6,7 +6,7 @@
  */
  
 
-import { defaultSettings, loadSettings, Target } from './viewer/settings.js';
+import { defaultSettings, loadSettings, Target, isAndroid } from './viewer/settings.js';
 // do not catch anything before loading settings
 export const settings = {
   extensions: [],
@@ -17,7 +17,6 @@ export const settings = {
 
 loadSettings(defaultSettings, newSettings => Object.assign(settings, newSettings) );
 const tabUrlCache = new Map();
-const isAndroid = navigator.userAgent.toLowerCase().includes("android");
   
 browser.action.onClicked.addListener((event) => {
   browser.tabs.create({ url: browser.runtime.getURL(`viewer/upload.html`) });
@@ -149,6 +148,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // disabled catching downloads because you first still need to select a download folder and click save, and only then it opens in the viewer which is unexpected behaviour
+// requires manifest permission downloads
 /*
 browser.downloads.onCreated.addListener((downloadItem) => {
   if (is3dFile(downloadItem.filename)) {

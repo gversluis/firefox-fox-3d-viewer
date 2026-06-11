@@ -58,10 +58,21 @@ export const defaultSettings = {
 
 // warning: this is async, so settings are not directly loaded
 export function loadSettings(settings, onReady = (settings) => {}) {
+  browser.runtime.getPlatformInfo().then( platformInfo => { 
+    isAndroid = platformInfo?.os === "android";
+    if (isAndroid) {
+      Target.NEW_NEXT_TAB.unsupported = "Opening in the next tab is not supported on Android";
+      Target.NEW_PREV_TAB.unsupported = "Opening in the previous tab is not supported on Android";
+      Target.NEW_WINDOW.unsupported = "Opening in a new Window is not supported on Android";
+    }
 	browser.storage.local.get(settings).then( loaded => { Object.assign(settings, loaded); onReady(settings) }, error => { console.warn("Failed to load settings", error); onReady(settings) } );
+  });
 }
 
 export function saveSettings(settings) {
 	browser.runtime.sendMessage({ type: 'RELOAD', settings: settings });
 	browser.storage.local.set(settings);
 }
+
+export let isAndroid = true;    // is set on loadSettings
+

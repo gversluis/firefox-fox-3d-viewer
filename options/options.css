@@ -13,6 +13,7 @@
   --border-color-interactive: light-dark(var(--color-gray-60), var(--color-gray-50));
   --input-text-border-color: var(--border-color-interactive);
   --toggle-border-color: var(--border-color-interactive);
+  --button-opacity-disabled: 0.4;
   /* --text-color: light-dark(var(--color-gray-100), var(--color-gray-05)); */
   --red-50: #ff0039;
   --in-content-border-invalid: light-dark(var(--red-50), rgb(255, 132, 139));
@@ -98,6 +99,12 @@ section {
 div {
     margin: 6px 0px;
     vertical-align: middle;
+}
+
+input[type=radio],
+input:disabled + label,
+input:disabled + label:before {
+    opacity: var(--button-opacity-disabled);
 }
 
 input[type=checkbox] {

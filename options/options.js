@@ -69,6 +69,7 @@ function addTargets(targets) {
   const template = document.querySelector('template#target');
   Object.keys(Target).reverse().forEach( e => {
       const o = Target[e];
+      if (o.unsupported) return;
       const clone = document.importNode(template.content, true);
       const div = clone.querySelector('div');
       div.innerHTML = div.innerHTML.replaceAll('${id}', o.value);
